@@ -75,25 +75,28 @@ int main(int argc, char** argv)
     fflush(NULL);
 
     printf("New termios structure set\n");
-
+  
     int i = 0;
     while (STOP==FALSE) {       /* loop for input */
       res = read(fd,buf+i,1);   /* returns after 5 chars have been input */
       if(res > 0) {
-        if (buf[0]=='\0') STOP=TRUE;
+        if (buf[i]=='\0') STOP=TRUE;
         i++;
       }
     }
-    printf(":%s\n", buf);
+    printf("Received: %s\n", buf);
 
+    
+    //writing back to the emissor
+    int size = strlen(buf) + 1;
 
+    res = write(fd,buf,size);
 
-  /*
-    O ciclo WHILE deve ser alterado de modo a respeitar o indicado no gui�o
-  */
+    fflush(NULL);
+    printf("Sending back...\n");
+    printf("%d bytes written\n", res);
 
-
-
+    sleep(1);
     tcsetattr(fd,TCSANOW,&oldtio);
     close(fd);
     return 0;
