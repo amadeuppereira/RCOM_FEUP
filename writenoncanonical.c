@@ -91,13 +91,23 @@ int main(int argc, char** argv)
     fflush(NULL);
     printf("%d bytes written\n", res);
 
+    int i = 0;
+    while (STOP==FALSE) {       /* loop for input */
+      res = read(fd,buf+i,1);   /* returns after 5 chars have been input */
+      if(res > 0) {
+        if (buf[i]=='\0') STOP=TRUE;
+        i++;
+      }
+    }
+    printf("Received: %s\n", buf);
+
 
   /*
     O ciclo FOR e as instru��es seguintes devem ser alterados de modo a respeitar
     o indicado no gui�o
   */
 
-
+    sleep(1);
     if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
       perror("tcsetattr");
       exit(-1);
