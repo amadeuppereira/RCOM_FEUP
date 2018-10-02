@@ -8,21 +8,35 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 
 #define BAUDRATE B38400
 #define MODEMDEVICE "/dev/ttyS1"
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
+#define SET_F 0x7e
+int flag = 0;
+int conta = 0;
 
 volatile int STOP=FALSE;
+
+
+
+void atende()                   // atende alarme
+{
+	printf("alarme # %d\n", conta);
+	flag=1;
+	conta++;
+}
 
 int main(int argc, char** argv)
 {
     int fd, res;
+    (void) signal(SIGALRM, atende);  // instala  rotina que atende interrupcao
     //int c;
     struct termios oldtio,newtio;
-    char buf[255];
+    char ua[5];
     //int i, sum = 0, speed = 0;
 
     if ( (argc < 2) ||
@@ -74,32 +88,52 @@ int main(int argc, char** argv)
       exit(-1);
     }
 
+
+  //  printf("Vou terminar.\n");
+
     printf("New termios structure set\n");
 
     printf("Message: ");
 
-    char* temp = gets(buf);
-    if(temp == NULL) {
+  //  char* temp = gets(ua);
+  /*  if(temp == NULL) {
       perror("gets");
       exit(-1);
     }
+    */
 
-    int size = strlen(buf) + 1;
+    //int size = strlen(buf) + 1;
 
-    res = write(fd,buf,size);
+    char set[5] = {SET_F , 0x03 , 0x03 , 0x00 , SET_F};
 
-    fflush(NULL);
-    printf("%d bytes written\n", res);
+    int i;
 
-    int i = 0;
-    while (STOP==FALSE) {       /* loop for input */
-      res = read(fd,buf+i,1);   /* returns after 5 chars have been input */
-      if(res > 0) {
-        if (buf[i]=='\0') STOP=TRUE;
-        i++;
+    while (STOP==FALSE && conta < 3) {       /* lobreak;op for input */
+      i = 0;
+      res = write(fd,set,sizeof(char) * 5);
+
+      fflush(NULL);
+      printf("%d bytes written\n", res);
+      alarm(3);
+      flag = 0;
+      while(flag == 0 && STOP==FALSE){
+        res = read(fd,ua+i,1);
+        if (ua[0] == SET_F){
+          i++;
+        }
+        else if(i > 0 && ua[i]!=SET_F){
+          i++;
+        }
+       else if(i == 4 && ua[i]==SET_F) {
+          STOP = TRUE;
+        }
+
       }
+
+
+
     }
-    printf("Received: %s\n", buf);
+    printf("Received: %s\n", ua);
 
 
   /*
