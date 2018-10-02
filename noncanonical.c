@@ -13,8 +13,11 @@
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
+#define SET_F 0x7e
+#define XOR(a, b) a^b
 
 volatile int STOP=FALSE;
+
 
 int main(int argc, char** argv)
 {
@@ -77,24 +80,59 @@ int main(int argc, char** argv)
     printf("New termios structure set\n");
   
     int i = 0;
-    while (STOP==FALSE) {       /* loop for input */
-      res = read(fd,buf+i,1);   /* returns after 5 chars have been input */
+ /*   while (STOP==FALSE) {       
+      res = read(fd,buf+i,1);
       if(res > 0) {
         if (buf[i]=='\0') STOP=TRUE;
         i++;
       }
     }
-    printf("Received: %s\n", buf);
+*/
+    int state = 0;
+
+    while(STOP==FALSE) {
+      res = read(fd, buf+i, 1);
+      switch(state) {
+	case 0:  
+	  if(res > 0 && *(buf+i) == SET_F) {
+            i++;
+            state++;
+          }
+          break;
+        case 1:
+          if(res > 0 && *(buf+i) != SET_F) {
+	    i++;
+            state++;
+	  } 
+	  break;
+        case 2:
+          if(res > 0 && *(buf+i) != SET_F) {
+            i++;
+	  }
+          else if (res > 0 && *(buf+i) == SET_F) {
+	    state++;
+	  }
+	  break;
+	default:
+	  STOP = TRUE;
+	  break;
+      }
+    }
+
+    int isValidSet = (buf[3] == (XOR(buf[1], buf[2])));
+    printf("Valid SET ? %s\n", isValidSet ? "true" : "false");
+
+    //printf("Received: %s\n", buf);
 
     
     //writing back to the emissor
-    int size = strlen(buf) + 1;
+    //int size = strlen(buf) + 1;
 
-    res = write(fd,buf,size);
+    //res = write(fd,buf,size);
 
     fflush(NULL);
-    printf("Sending back...\n");
-    printf("%d bytes written\n", res);
+    //printf("Sending back...\n");
+    //printf("%d bytes written\n", res);
 
     sleep(1);
     tcsetattr(fd,TCSANOW,&oldtio);
