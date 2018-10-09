@@ -13,8 +13,11 @@
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
-#define SET_F 0x7e
+#define F 0x7e
+#define UA_A 0x03
+#define UA_C 0x07
 #define XOR(a, b) a^b
+#define UA_BCC1 XOR(UA_A, UA_C)
 
 volatile int STOP=FALSE;
 
@@ -80,47 +83,53 @@ int main(int argc, char** argv)
     printf("New termios structure set\n");
   
     int i = 0;
- /*   while (STOP==FALSE) {       
-      res = read(fd,buf+i,1);
-      if(res > 0) {
-        if (buf[i]=='\0') STOP=TRUE;
-        i++;
-      }
-    }
-*/
     int state = 0;
+    int isValidSet;
+
+    char ua[5] = {F , UA_A , UA_C , UA_BCC1 , F};
 
     while(STOP==FALSE) {
       res = read(fd, buf+i, 1);
       switch(state) {
-	case 0:  
-	  if(res > 0 && *(buf+i) == SET_F) {
-            i++;
-            state++;
+	      case 0:  
+	         if(res > 0 && *(buf+i) == F) {
+              i++;
+              state++;
           }
           break;
         case 1:
-          if(res > 0 && *(buf+i) != SET_F) {
-	    i++;
+           if(res > 0 && *(buf+i) != F) {
+	          i++;
             state++;
-	  } 
-	  break;
+	        } 
+	        break;
         case 2:
-          if(res > 0 && *(buf+i) != SET_F) {
+          if(res > 0 && *(buf+i) != F) {
             i++;
-	  }
-          else if (res > 0 && *(buf+i) == SET_F) {
-	    state++;
-	  }
-	  break;
-	default:
-	  STOP = TRUE;
-	  break;
+	        }
+          else if (res > 0 && *(buf+i) == F) {
+	          state++;
+	        }                                          
+	        break;
+      	default:
+             isValidSet = (buf[3] == (XOR(buf[1], buf[2])));
+             printf("Valid SET ? %s\n", isValidSet ? "true" : "false");
+             if(isValidSet){
+	              STOP = TRUE;
+                res = write(fd,ua,sizeof(char)*5);
+                printf("%d bytes written\n", res);
+             }
+             else{
+               i = 0;
+               state = 0;
+             }
+	      break;
       }
     }
 
-    int isValidSet = (buf[3] == (XOR(buf[1], buf[2])));
-    printf("Valid SET ? %s\n", isValidSet ? "true" : "false");
+ 
+
+
 
     //printf("Received: %s\n", buf);
 
