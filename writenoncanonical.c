@@ -36,7 +36,7 @@ int main(int argc, char** argv)
     (void) signal(SIGALRM, atende);  // instala  rotina que atende interrupcao
     //int c;
     struct termios oldtio,newtio;
-    char ua[5];
+    char ua[255];
     //int i, sum = 0, speed = 0;
 
     if ( (argc < 2) ||
@@ -88,21 +88,7 @@ int main(int argc, char** argv)
       exit(-1);
     }
 
-
-  //  printf("Vou terminar.\n");
-
     printf("New termios structure set\n");
-
-    printf("Message: ");
-
-  //  char* temp = gets(ua);
-  /*  if(temp == NULL) {
-      perror("gets");
-      exit(-1);
-    }
-    */
-
-    //int size = strlen(buf) + 1;
 
     char set[5] = {SET_F , 0x03 , 0x03 , 0x00 , SET_F};
 
@@ -112,28 +98,29 @@ int main(int argc, char** argv)
       i = 0;
       res = write(fd,set,sizeof(char) * 5);
 
-      fflush(NULL);
-      printf("%d bytes written\n", res);
-      alarm(3);
-      flag = 0;
-      while(flag == 0 && STOP==FALSE){
-        res = read(fd,ua+i,1);
-        if (ua[0] == SET_F){
-          i++;
-        }
-        else if(i > 0 && ua[i]!=SET_F){
-          i++;
-        }
-       else if(i == 4 && ua[i]==SET_F) {
-          STOP = TRUE;
-        }
-
-      }
-
-
-
+			fflush(NULL);
+			printf("%d bytes written\n", res);
+			alarm(3);
+			flag = 0;
+				while(flag == 0 && STOP==FALSE){
+					res = read(fd,ua+i,1);
+					if (i==0 && ua[0] == SET_F){
+						i++;
+					}
+					else if(i > 0 && ua[i]!=SET_F){
+						i++;
+					}
+				 else if(i > 0 && ua[i]==SET_F) {
+					 if (i > 3  && ua[3] == (ua[1] ^ ua[2]))
+					 	STOP = TRUE;
+					}
+				}
     }
-    printf("Received: %s\n", ua);
+		if(STOP == TRUE){
+				printf("Received: 0x%x\n", ua[2]);
+		}
+		else
+			printf("Connection not established after 3 attempts\n");
 
 
   /*
