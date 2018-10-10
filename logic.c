@@ -126,7 +126,7 @@ int llopen_Sender(){
 		flag = 0;
 
     int state = 0;
-    while(flag == 0 || STOP==FALSE){
+    while(flag == 0 && STOP==FALSE){
       res = read(fd,buf+i,1);
 
       switch(state) {
