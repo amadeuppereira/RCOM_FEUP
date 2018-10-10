@@ -125,22 +125,8 @@ int llopen_Sender(){
 		alarm(3);
 		flag = 0;
 
-		// while(flag == 0 && STOP==FALSE){
-		// 	res = read(fd,buf+i,1);
-		// 	if (i==0 && buf[0] == F){
-		// 		i++;
-		// 	}
-		// 	else if(i > 0 && buf[i]!=F){
-		// 		i++;
-		// 	}
-		// 	else if(i > 0 && buf[i]==F) {
-		// 		if (i > 3  && buf[3] == (XOR(buf[1], buf[2])))
-		// 			STOP = TRUE;
-		// 	}
-		// }
-
     int state = 0;
-    while(flag == 0){
+    while(flag == 0 || STOP==FALSE){
       res = read(fd,buf+i,1);
 
       switch(state) {
