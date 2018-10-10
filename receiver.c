@@ -1,6 +1,9 @@
 //receiver -- application layer
 
 #include "logic.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 //states
 #define START 0
 #define PACKAGE 1

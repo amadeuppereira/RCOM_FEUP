@@ -1,8 +1,22 @@
 #include "logic.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <strings.h>
+#include <signal.h>
+
+struct termios oldtio, newtio;
 
 int flag = 0;
 int counter = 0;
 volatile int STOP=FALSE;
+int fd, res;
+char buf[255];
 
 void alarm_function(){
 	printf("Alarm #%d\n", counter);
@@ -52,7 +66,7 @@ int llopen_Receiver(){
     res = read(fd, buf+i, 1);
 
     switch(state) {
-      case 0:  
+      case 0:
         if(res > 0 && *(buf+i) == F) {
           i++;
           state++;
@@ -62,7 +76,7 @@ int llopen_Receiver(){
         if(res > 0 && *(buf+i) != F) {
           i++;
           state++;
-        } 
+        }
         break;
       case 2:
         if(res > 0 && *(buf+i) != F) {
@@ -70,7 +84,7 @@ int llopen_Receiver(){
         }
         else if (res > 0 && *(buf+i) == F) {
           state++;
-        }                                          
+        }
         break;
       default:
         isValidSet = (buf[3] == (XOR(buf[1], buf[2])));
@@ -90,7 +104,7 @@ int llopen_Receiver(){
 
   //printf("Received: %s\n", buf);
 
-    
+
   //writing back to the emissor
   //int size = strlen(buf) + 1;
 
@@ -102,7 +116,7 @@ int llopen_Receiver(){
 
   sleep(1);
   tcsetattr(fd,TCSANOW,&oldtio);
-  
+
   close(fd);
   return 0;
 }
@@ -130,7 +144,7 @@ int llopen_Sender(){
       res = read(fd,buf+i,1);
 
       switch(state) {
-      case 0:  
+      case 0:
         if(res > 0 && *(buf+i) == F) {
           i++;
           state++;
@@ -140,7 +154,7 @@ int llopen_Sender(){
         if(res > 0 && *(buf+i) != F) {
           i++;
           state++;
-        } 
+        }
         break;
       case 2:
         if(res > 0 && *(buf+i) != F) {
@@ -148,7 +162,7 @@ int llopen_Sender(){
         }
         else if (res > 0 && *(buf+i) == F) {
           state++;
-        }                                          
+        }
         break;
       default:
         isValidSet = (buf[3] == (XOR(buf[1], buf[2])));
@@ -164,7 +178,7 @@ int llopen_Sender(){
       }
     }
   }
-		
+
   if(STOP == TRUE){
 		printf("Received: 0x%x\n", buf[2]);
 	}
@@ -190,6 +204,6 @@ int llopen(int type){
   {
     return llopen_Receiver();
   }
-  
+
   return ERROR;
 }

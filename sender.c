@@ -1,5 +1,7 @@
 #include "logic.h"
-
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 // void generateStartPackage(char[] fileName, int fileSize){
 //   char[] start = {0x02, 0x00, L1, fileSize, 0x01, L2};
 
