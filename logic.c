@@ -109,9 +109,11 @@ int llopen_Receiver(){
 
 int llopen_Sender(){
   (void) signal(SIGALRM, alarm_function);
+
   char set[5] = {F , 0x03 , 0x03 , 0x00 , F};
 
   int i;
+  int isValidSet;
 
   while (STOP==FALSE && counter < 3) {
     i = 0;
@@ -123,19 +125,58 @@ int llopen_Sender(){
 		alarm(3);
 		flag = 0;
 
-		while(flag == 0 && STOP==FALSE){
-			res = read(fd,buf+i,1);
-			if (i==0 && buf[0] == F){
-				i++;
-			}
-			else if(i > 0 && buf[i]!=F){
-				i++;
-			}
-			else if(i > 0 && buf[i]==F) {
-				if (i > 3  && buf[3] == (XOR(buf[1], buf[2])))
-					STOP = TRUE;
-			}
-		}
+		// while(flag == 0 && STOP==FALSE){
+		// 	res = read(fd,buf+i,1);
+		// 	if (i==0 && buf[0] == F){
+		// 		i++;
+		// 	}
+		// 	else if(i > 0 && buf[i]!=F){
+		// 		i++;
+		// 	}
+		// 	else if(i > 0 && buf[i]==F) {
+		// 		if (i > 3  && buf[3] == (XOR(buf[1], buf[2])))
+		// 			STOP = TRUE;
+		// 	}
+		// }
+
+    int state = 0;
+    while(flag == 0){
+      res = read(fd,buf+i,1);
+
+      switch(state) {
+      case 0:  
+        if(res > 0 && *(buf+i) == F) {
+          i++;
+          state++;
+        }
+        break;
+      case 1:
+        if(res > 0 && *(buf+i) != F) {
+          i++;
+          state++;
+        } 
+        break;
+      case 2:
+        if(res > 0 && *(buf+i) != F) {
+          i++;
+        }
+        else if (res > 0 && *(buf+i) == F) {
+          state++;
+        }                                          
+        break;
+      default:
+        isValidSet = (buf[3] == (XOR(buf[1], buf[2])));
+        printf("Valid SET ? %s\n", isValidSet ? "true" : "false");
+        if(isValidSet){
+          STOP = TRUE;
+        }
+        else{
+          i = 0;
+          state = 0;
+        }
+        break;
+      }
+    }
   }
 		
   if(STOP == TRUE){
