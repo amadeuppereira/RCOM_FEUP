@@ -13,6 +13,10 @@
 #define UA_C 0x07
 #define XOR(a, b) a^b
 #define UA_BCC1 XOR(UA_A, UA_C)
+#define RR0 0x05
+#define RR1 0x85
+#define REJ0 0x01
+#define REJ1 0x81
 
 void alarm_function();
 int setup(char *port);
@@ -20,3 +24,4 @@ int llopen_Receiver();
 int llopen_Sender();
 int llopen(int type);
 int llwrite(char *buffer, int length);
+int llclose();

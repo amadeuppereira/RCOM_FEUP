@@ -15,7 +15,6 @@ struct termios oldtio, newtio;
 int flag = 0;
 int counter = 0;
 int fd;
-char buf[255];
 char C_FLAG = 0x0;
 
 char getCFlag(){
@@ -66,6 +65,7 @@ int setup(char *port) {
 }
 
 int llopen_Receiver(){
+	char buf[255];
   int i = 0;
 	int res;
   int state = 0;
@@ -132,10 +132,30 @@ int llopen_Receiver(){
   return 0;
 }
 
+int handleReponse(char *buff){
+	switch(buff[2]){
+		case (char)RR0:
+			return 0;
+		break;
+		case (char)RR1:
+			return 0;
+		break;
+		case (char)REJ0:
+			return ERROR;
+		break;
+		case (char)REJ1:
+			return ERROR;
+		break;
+		default:
+			return ERROR;
+	}
+}
+
 int sendMsg(char *msg, int length){
 	int i, res;
 	int STOP = FALSE;
 	int isValidSet;
+	char buf[255];
 
 	(void) signal(SIGALRM, alarm_function);
 
@@ -179,6 +199,7 @@ int sendMsg(char *msg, int length){
         printf("Valid SET ? %s\n", isValidSet ? "true" : "false");
         if(isValidSet){
           STOP = TRUE;
+					handleReponse(buf);
         }
         else{
           i = 0;
@@ -293,6 +314,11 @@ int llwrite(char *buffer, int length){
 
 	// envia buff3 na porta serie
 	while(sendMsg(buff3, 2 * (length+1) + 5) != 0){}
+	free(buff3);
 
 	return 0;
+}
+
+int llclose(){
+	return close(fd);
 }
