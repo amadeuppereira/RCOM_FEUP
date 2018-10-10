@@ -23,11 +23,7 @@
 #define UA_BCC1 XOR(UA_A, UA_C)
 
 int fd, res;
-int flag = 0;
-int counter = 0;
 char buf[255];
-
-volatile int STOP=FALSE;
 
 struct termios oldtio, newtio;
 

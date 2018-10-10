@@ -1,5 +1,9 @@
 #include "logic.h"
 
+int flag = 0;
+int counter = 0;
+volatile int STOP=FALSE;
+
 void alarm_function(){
 	printf("Alarm #%d\n", counter);
 	flag=1;
@@ -138,7 +142,7 @@ int llopen_Sender(){
 		printf("Received: 0x%x\n", buf[2]);
 	}
 	else
-		printf("Connection not established after 3 attempts\n");
+		return ERROR;
 
   sleep(1);
   if ( tcsetattr(fd,TCSANOW,&oldtio) == ERROR) {
