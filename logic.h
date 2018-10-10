@@ -7,6 +7,8 @@
 #define ERROR -1
 #define BUFFER_MAX_SIZE 255
 #define F 0x7e
+#define SET_D 0x7d
+#define SET_E 0x7e
 #define UA_A 0x03
 #define UA_C 0x07
 #define XOR(a, b) a^b
@@ -17,3 +19,4 @@ int setup(char *port);
 int llopen_Receiver();
 int llopen_Sender();
 int llopen(int type);
+int llwrite(char *buffer, int length);

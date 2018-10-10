@@ -14,9 +14,19 @@ struct termios oldtio, newtio;
 
 int flag = 0;
 int counter = 0;
-volatile int STOP=FALSE;
-int fd, res;
+int fd;
 char buf[255];
+char C_FLAG = 0x0;
+
+char getCFlag(){
+	if (C_FLAG == 0x0){
+		C_FLAG = 0x40;
+		return 0x0;
+	} else {
+		C_FLAG = 0x0;
+		return 0x40;
+	}
+}
 
 void alarm_function(){
 	printf("Alarm #%d\n", counter);
@@ -57,9 +67,10 @@ int setup(char *port) {
 
 int llopen_Receiver(){
   int i = 0;
+	int res;
   int state = 0;
   int isValidSet;
-
+	int STOP =  FALSE;
   char ua[5] = {F , UA_A , UA_C , UA_BCC1 , F};
 
   while(STOP==FALSE) {
@@ -121,18 +132,17 @@ int llopen_Receiver(){
   return 0;
 }
 
-int llopen_Sender(){
-  (void) signal(SIGALRM, alarm_function);
+int sendMsg(char *msg, int length){
+	int i, res;
+	int STOP = FALSE;
+	int isValidSet;
 
-  char set[5] = {F , 0x03 , 0x03 , 0x00 , F};
+	(void) signal(SIGALRM, alarm_function);
 
-  int i;
-  int isValidSet;
-
-  while (STOP==FALSE && counter < 3) {
+	while (STOP==FALSE && counter < 3) {
     i = 0;
 
-    res = write(fd,set,sizeof(char) * 5);
+    res = write(fd, msg, sizeof(char) * length);
     printf("%d bytes written\n", res);
 		fflush(NULL);
 
@@ -191,8 +201,13 @@ int llopen_Sender(){
     return ERROR;
   }
 
-  close(fd);
   return 0;
+}
+
+int llopen_Sender(){
+  char set[5] = {F , 0x03 , 0x03 , 0x00 , F};
+
+	return sendMsg(set, 5);
 }
 
 int llopen(int type){
@@ -206,4 +221,78 @@ int llopen(int type){
   }
 
   return ERROR;
+}
+
+char *generateBCC2(char *buffer, int length){
+	char *buff1 = malloc(sizeof(char) * (length+1));
+
+	// generate bcc2
+	char bcc2 = XOR(buffer[1], buffer[2]);
+
+	// copy from buffer to buff1
+	strncpy(buff1, buffer, length);
+
+	// add bcc2 to buff1
+	buff1[length] = bcc2;
+
+	return buff1;
+}
+
+char *stuffing(char *buffer, int length){
+	char *buff = malloc(sizeof(char) * 2 * length);
+	int i, j = 0;
+
+	for(i = 0; i < length; i++){
+		if(buffer[i] == SET_E){
+			buff[j] = 0x7d;
+			buff[j+1] = 0x5e;
+			j++;
+		}
+		else if (buffer[i] == SET_D){
+			buff[j] = 0x7d;
+			buff[j+1] = 0x5d;
+			j++;
+		} else {
+			buff[j] = buffer[i];
+		}
+		j++;
+	}
+
+	return buff;
+}
+
+char *createMsg(char *buffer, int length){
+	char *msg = malloc(length + 5);
+
+	msg[0] = F;
+	msg[1] = UA_A;
+	msg[2] = getCFlag();
+
+	// add bcc1
+	msg[3] = XOR(msg[1], msg[2]);
+
+	// copy buffer
+	strncpy(msg, buffer, length);
+	msg[length + 4] = F;
+
+	return msg;
+}
+
+int llwrite(char *buffer, int length){
+
+	// calculate BCC2
+	char *buff1 = generateBCC2(buffer, length);
+
+	// stuffing
+	char *buff2 = stuffing(buff1, length+1);
+	free(buff1);
+
+	// junta cabecalho e flag inicial
+	char *buff3 = createMsg(buff2, 2 * (length+1));
+	free(buff2);
+
+	// envia buff3 na porta serie
+	while(sendMsg(buff3, 2 * (length+1) + 5) != 0){}
+
+	return 0;
 }
