@@ -8,23 +8,40 @@
 #define START_C 0x02
 #define START_T_FILESIZE 0x00
 #define START_T_FILENAME 0x01
+#define RIGHT_SHIFT_CALC(size, index) 8*(size - index - 1)
 
+int fd;
 
-int getFileSize(const char* filename);
-void generateStartPackage(const char* filename, int fileSize);
+size_t getFileSize(const char* filename);
+void startPackageHandler(const char* filename, size_t fileSize);
+int generateStartPackage(const char* filename, size_t fileSize, char** startPackage);
 
 int main(int argc, char** argv){
 
   // parse arguments
-  if ( (argc < 3) ||
-       ((strcmp("/dev/ttyS0", argv[1])!=0) &&
-        (strcmp("/dev/ttyS1", argv[1])!=0) )) {
+  if ((argc < 3) ||
+      ((strcmp("/dev/ttyS0", argv[1])!=0) &&
+      (strcmp("/dev/ttyS1", argv[1])!=0) )) {
     printf("Usage:%s [serial port] [file path]\n", argv[0]);
     exit(-1);
   }
 
+  // 1 ler dados do ficheiro
+  size_t fileSize = getFileSize(argv[2]);
+  if(fileSize == -1) {
+    printf("Error: could not get file size\n");
+    exit(-1);
+  }
+  else if(fileSize == -2) {
+    printf("Error: %s is not a file\n", argv[2]);
+    exit(-1);
+  }
+  else {
+    printf("\n\tfile: %s (0x%lx bytes)\n\n", argv[2], fileSize);
+  }
+
   // setup serial port
-  if (setup(argv[1]) == ERROR){
+  if ((fd = setup(argv[1])) == ERROR){
     printf("Error: could not setup serial port %s.\n", argv[1]);
     exit(-1);
   }
@@ -36,25 +53,12 @@ int main(int argc, char** argv){
   // else {
   //     printf("Connection Successful\n");
   // }
-
-  // 1 ler dados do ficheiro
-  int fileSize = getFileSize(argv[2]);
-  if(fileSize == -1) {
-    printf("Error: could not get file size\n");
-    exit(-1);
-  }
-  else if(fileSize == -2) {
-    printf("Error: %s is not a file\n", argv[2]);
-    exit(-1);
-  }
-  else {
-    printf("\n\tfile: %s (0x%x bytes)\n\n", argv[2], fileSize);
-  }
+  
   // FILE *file;
   // file = fopen(argv[2], "r");
 
   // 2 gerar pacote start
-  generateStartPackage(argv[2], fileSize);
+  startPackageHandler(argv[2], fileSize);
 
   //   // 3 gerar n pacotes com k dados lidos do ficheiro
   //   generateFPackages();
@@ -69,7 +73,7 @@ int main(int argc, char** argv){
   return 0;
 }
 
-int getFileSize(const char* filename) {
+size_t getFileSize(const char* filename){
 
   struct stat fileStat;
   
@@ -85,10 +89,26 @@ int getFileSize(const char* filename) {
   
 }
 
-void generateStartPackage(const char* filename, const int filesize){
-  char* start;
-  int i = 0, j, temp;
+void startPackageHandler(const char* filename, size_t fileSize) {
+    char* startPackage = NULL;
+    int startPackageSize = generateStartPackage(filename, fileSize, &startPackage);
 
+    // printf("handler: %d\n", startPackageSize);
+    //   int w;
+    // for(w = 0; w < startPackageSize; w++) {
+    //   printf("0x%x (%c) | ", (unsigned char)startPackage[w], (unsigned char)startPackage[w]);
+    // }
+    // printf("\n");
+
+
+    // llwrite(fd, startPackage, startPackageSize);
+
+    free(startPackage);
+}
+
+int generateStartPackage(const char* filename, const size_t filesize, char** start){
+  char* temp;
+  int i = 0, j;
   int startPackageSize = 1;
 
   //filesize tlv
@@ -99,39 +119,23 @@ void generateStartPackage(const char* filename, const int filesize){
   int filename_s = strlen(filename) * sizeof(char);
   startPackageSize += 2 + filename_s;
 
-  start = malloc(startPackageSize); 
+  temp = malloc(startPackageSize); 
+  temp[i++] = START_C;               //C
+  temp[i++] = START_T_FILESIZE;      //T
+  temp[i++] = filesize_s;            //L
 
-  start[i++] = START_C;               //C
-  start[i++] = START_T_FILESIZE;      //T
-  start[i++] = filesize_s;            //L
-
-   printf("---- 0x%x\n", filesize);
-
-//   start[i++] = (filesize >> 24) & 0xFF; 
-//   printf("%x\n", start[i-1]);
-//   start[i++] = (filesize >> 16) & 0xFF;
-//  printf("%x\n", start[i-1]);
-//   start[i++] = (filesize >> 8) & 0xFF;
-//   printf("%x\n", start[i-1]);
-//   start[i++] = (filesize) & 0xFF;
-//   printf("%x\n", start[i-1]);
-  
-  for(j = 0; j < filesize_s; j++) {
-    i+=j;
-    start[i] = (filesize >> (8*(filesize_s - j - 1))) & 0xFF; //V
-    printf("0x%x - %d\n", start[i], (filesize_s - j - 1));
+  for(j = 0; j < filesize_s; j++, i++) {
+    //temp[i] = (filesize >> (8*(filesize_s - j - 1))) & 0xFF; //V
+    temp[i] = (filesize >> RIGHT_SHIFT_CALC(filesize_s, j)) & 0xFF; //V
   }
 
-  start[i++] = START_T_FILENAME; //T
-  start[i++] = filename_s;
+  temp[i++] = START_T_FILENAME;  //T
+  temp[i++] = filename_s;        //L
 
-  temp = i;
-  for(; i < filename_s + temp; i++) {
-    start[i] = *(filename + i - temp);
+  for(j = 0; j < filename_s; j++, i++) {
+    temp[i] = *(filename + j);   //V
   }
 
-  printf("\n");
-
-
-  free(start);
+  *start = temp;
+  return startPackageSize;
 }
