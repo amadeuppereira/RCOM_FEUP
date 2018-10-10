@@ -18,10 +18,8 @@
 #define REJ0 0x01
 #define REJ1 0x81
 
-void alarm_function();
 int setup(char *port);
-int llopen_Receiver();
-int llopen_Sender();
 int llopen(int type);
 int llwrite(char *buffer, int length);
+int llread(char *buffer);
 int llclose();
