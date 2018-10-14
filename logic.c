@@ -105,8 +105,8 @@ int readMsg(char **buff){
 				i = 0;
 				state = 0;
 			}
+			break;
 		}
-		break;
 	}
 
 	return ERROR;
@@ -128,26 +128,6 @@ int llopen_Receiver(){
 
 	return ERROR;
 }
-
-int handleReponse(char *msg, char *buff){
-	switch(buff[2]){
-		case (char)RR0:
-			return 0;
-		break;
-		case (char)RR1:
-			return 0;
-		break;
-		case (char)REJ0:
-			return ERROR;
-		break;
-		case (char)REJ1:
-			return ERROR;
-		break;
-		default:
-			return ERROR;
-	}
-}
-
 
 char *sendMsg(char *msg, int length){
 	int res;
@@ -178,7 +158,7 @@ char *sendMsg(char *msg, int length){
 			int isValidBCC  = (buf[3] == (XOR(buf[1], buf[2])));
 
 			if (isValidBCC)
-				STOP = 1;
+				STOP = TRUE;
 		}
   }
 	// reset global counter
