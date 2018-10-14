@@ -7,10 +7,12 @@
 #define ERROR -1
 #define BUFFER_MAX_SIZE 255
 #define F 0x7e
-#define SET_D 0x7d
-#define SET_E 0x7e
+#define SETE_D 0x7d
+#define SETE_E 0x7e
 #define UA_A 0x03
 #define UA_C 0x07
+#define SET_C 0x03
+#define SET_A 0x03
 #define XOR(a, b) a^b
 #define UA_BCC1 XOR(UA_A, UA_C)
 #define RR0 0x05

@@ -65,75 +65,71 @@ int setup(char *port) {
   return fd;
 }
 
-int llopen_Receiver(){
-	char buf[255];
-  int i = 0;
-	int res;
-  int state = 0;
-  int isValidSet;
-	int STOP =  FALSE;
-  char ua[5] = {F , UA_A , UA_C , UA_BCC1 , F};
 
-  while(STOP==FALSE) {
-    res = read(fd, buf+i, 1);
+int readMsg(char **buff){
+	char *buf = malloc(sizeof(char) * 255);
+	int res, i = 0;
+	int state = 0, isValidBCC;
 
-    switch(state) {
-      case 0:
-        if(res > 0 && *(buf+i) == F) {
-          i++;
-          state++;
-        }
-        break;
-      case 1:
-        if(res > 0 && *(buf+i) != F) {
-          i++;
-          state++;
-        }
-        break;
-      case 2:
-        if(res > 0 && *(buf+i) != F) {
-          i++;
-        }
-        else if (res > 0 && *(buf+i) == F) {
-          state++;
-        }
-        break;
-      default:
-        isValidSet = (buf[3] == (XOR(buf[1], buf[2])));
-        printf("Valid SET ? %s\n", isValidSet ? "true" : "false");
-        if(isValidSet){
-          STOP = TRUE;
-          res = write(fd,ua,sizeof(char)*5);
-          printf("%d bytes written\n", res);
-        }
-        else{
-          i = 0;
-          state = 0;
-        }
-        break;
-    }
-  }
+	while(flag == 0){
+		res = read(fd,buf+i,1);
 
-  //printf("Received: %s\n", buf);
+		switch(state) {
+		case 0:
+			if(res > 0 && *(buf+i) == F) {
+				i++;
+				state++;
+			}
+			break;
+		case 1:
+			if(res > 0 && *(buf+i) != F) {
+				i++;
+				state++;
+			}
+			break;
+		case 2:
+			if(res > 0 && *(buf+i) != F) {
+				i++;
+			}
+			else if (res > 0 && *(buf+i) == F) {
+				state++;
+			}
+			break;
+		default:
+			// is bcc valid
+			isValidBCC  = (buf[3] == (XOR(buf[1], buf[2])));
+			if (isValidBCC){
+				*buff = buf;
+				return i;
+			} else {
+				i = 0;
+				state = 0;
+			}
+		}
+		break;
+	}
 
-
-  //writing back to the emissor
-  //int size = strlen(buf) + 1;
-
-  //res = write(fd,buf,size);
-
-  fflush(NULL);
-  //printf("Sending back...\n");
-  //printf("%d bytes written\n", res);
-
-  sleep(1);
-  tcsetattr(fd,TCSANOW,&oldtio);
-
-  close(fd);
-  return 0;
+	return ERROR;
 }
 
-int handleReponse(char *buff){
+int llopen_Receiver(){
+	char *buf = NULL;
+	int res;
+  char ua[5] = {F , UA_A , UA_C , UA_BCC1 , F};
+
+	if (readMsg(&buf) == ERROR)
+			return ERROR;
+
+	if (buf[2] == SET_C && SET_A == buf[1]){
+		res = write(fd, ua, 5);
+		fflush(NULL);
+		return res;
+	}
+
+	return ERROR;
+}
+
+int handleReponse(char *msg, char *buff){
 	switch(buff[2]){
 		case (char)RR0:
 			return 0;
@@ -152,68 +148,38 @@ int handleReponse(char *buff){
 	}
 }
 
-int sendMsg(char *msg, int length){
-	int i, res;
+
+char *sendMsg(char *msg, int length){
+	int res;
+	char *buf = NULL;
 	int STOP = FALSE;
-	int isValidSet;
-	char buf[255];
 
 	struct sigaction action;
-	  action.sa_handler = alarm_function;
-	  sigemptyset(&action.sa_mask);
-	  action.sa_flags = 0;
+	action.sa_handler = alarm_function;
+	sigemptyset(&action.sa_mask);
+	action.sa_flags = 0;
 	sigaction(SIGALRM, &action, NULL);
 
 
 	while (STOP==FALSE && counter < numberOfTries) {
-    i = 0;
-
-    res = write(fd, msg, sizeof(char) * length);
-    printf("%d bytes written\n", res);
+		// write on serial port
+		res = write(fd, msg, sizeof(char) * length);
+		printf("%d bytes written\n", res);
 		fflush(NULL);
 
 		alarm(3);
 		flag = 0;
 
-    int state = 0;
-    while(flag == 0 && STOP==FALSE){
-      res = read(fd,buf+i,1);
+		// read response
+		if (readMsg(&buf) != ERROR){
+			// handle response
 
-      switch(state) {
-      case 0:
-        if(res > 0 && *(buf+i) == F) {
-          i++;
-          state++;
-        }
-        break;
-      case 1:
-        if(res > 0 && *(buf+i) != F) {
-          i++;
-          state++;
-        }
-        break;
-      case 2:
-        if(res > 0 && *(buf+i) != F) {
-          i++;
-        }
-        else if (res > 0 && *(buf+i) == F) {
-          state++;
-        }
-        break;
-      default:
-        isValidSet = (buf[3] == (XOR(buf[1], buf[2])));
-        printf("Valid SET ? %s\n", isValidSet ? "true" : "false");
-        if(isValidSet){
-          STOP = TRUE;
-					handleReponse(buf);
-        }
-        else{
-          i = 0;
-          state = 0;
-        }
-        break;
-      }
-    }
+			// is bcc valid
+			int isValidBCC  = (buf[3] == (XOR(buf[1], buf[2])));
+
+			if (isValidBCC)
+				STOP = 1;
+		}
   }
 	// reset global counter
 	counter = 0;
@@ -222,21 +188,25 @@ int sendMsg(char *msg, int length){
 		printf("Received: 0x%x\n", buf[2]);
 	}
 	else
-		return ERROR;
+		return NULL;
 
   sleep(1);
   if ( tcsetattr(fd,TCSANOW,&oldtio) == ERROR) {
     perror("tcsetattr");
-    return ERROR;
+    return NULL;
   }
 
-  return 0;
+  return buf;
 }
 
 int llopen_Sender(){
-  char set[5] = {F , 0x03 , 0x03 , 0x00 , F};
+  char set[5] = {F , SET_A , SET_C , 0x00 , F};
+	char *response = sendMsg(set, 5);
 
-	return sendMsg(set, 5);
+	if (response != NULL && response[2] == UA_C)
+		return 0;
+
+	return ERROR;
 }
 
 int llopen(int type){
@@ -281,7 +251,7 @@ char *stuffing(char *buffer, int *finalSize){
 
 	// count number of 0x7e and 0x7d
 	for(i = 0; i < *finalSize; i++){
-		if(buffer[i] == SET_E || buffer[i] == SET_D){
+		if(buffer[i] == SETE_E || buffer[i] == SETE_D){
 			size++;
 		}
 		size++;
@@ -290,12 +260,12 @@ char *stuffing(char *buffer, int *finalSize){
 	char *buff = malloc(sizeof(char) * size);
 
 		for(i = 0, j= 0; i < *finalSize; i++){
-			if(buffer[i] == SET_E){
+			if(buffer[i] == SETE_E){
 				buff[j] = 0x7d;
 				buff[j+1] = 0x5e;
 				j++;
 			}
-			else if (buffer[i] == SET_D){
+			else if (buffer[i] == SETE_D){
 				buff[j] = 0x7d;
 				buff[j+1] = 0x5d;
 				j++;
@@ -356,13 +326,28 @@ int llwrite(char *buffer, int length){
 	// envia buff3 na porta serie;
 	printBuffer(buff3, finalSize);
 
-	sendMsg(buff3, finalSize);
+	char *response = NULL;
+
+	while(response == NULL){
+		response = sendMsg(buff3, finalSize);
+
+		if (response != NULL && ((buff3[2] == 0x40 && response[2] == RR0) || (buff3[2] == 0x00 && response[2] == RR1))){
+			free(buff3);
+			return 0;
+		}
+		else if (response != NULL && ((buff3[2] == 0x40 && response[2] == REJ1) || (buff3[2] == 0x00 && response[2] == REJ0))){
+			response = NULL;
+		} else {
+			break;
+		}
+	}
 
 	free(buff3);
-
-	return 0;
+	return ERROR;
 }
 
 int llclose(){
+	sleep(1);
+	tcsetattr(fd,TCSANOW,&oldtio);
 	return close(fd);
 }

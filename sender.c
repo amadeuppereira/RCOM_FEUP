@@ -46,13 +46,13 @@ int main(int argc, char** argv){
     exit(-1);
   }
 
-  // if(llopen(TRANSMITTER) == ERROR){
-  //   printf("Error: could not write to the receiver\n");
-  //   exit(-1);
-  // }
-  // else {
-  //     printf("Connection Successful\n");
-  // }
+  if(llopen(TRANSMITTER) == ERROR){
+    printf("Error: could not write to the receiver\n");
+    exit(-1);
+  }
+  else {
+      printf("Connection Successful\n");
+  }
 
   // FILE *file;
   // file = fopen(argv[2], "r");
