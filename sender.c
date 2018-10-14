@@ -53,7 +53,7 @@ int main(int argc, char** argv){
   // else {
   //     printf("Connection Successful\n");
   // }
-  
+
   // FILE *file;
   // file = fopen(argv[2], "r");
 
@@ -76,7 +76,7 @@ int main(int argc, char** argv){
 size_t getFileSize(const char* filename){
 
   struct stat fileStat;
-  
+
   if (stat(filename, &fileStat) < 0 ){
     return -1;
   }
@@ -86,7 +86,7 @@ size_t getFileSize(const char* filename){
   }
 
   return fileStat.st_size;
-  
+
 }
 
 void startPackageHandler(const char* filename, size_t fileSize) {
@@ -99,9 +99,9 @@ void startPackageHandler(const char* filename, size_t fileSize) {
     //   printf("0x%x (%c) | ", (unsigned char)startPackage[w], (unsigned char)startPackage[w]);
     // }
     // printf("\n");
+    printf("Start package size: %d\n", startPackageSize);
 
-
-    // llwrite(fd, startPackage, startPackageSize);
+    llwrite(startPackage, startPackageSize);
 
     free(startPackage);
 }
@@ -119,7 +119,7 @@ int generateStartPackage(const char* filename, const size_t filesize, char** sta
   int filename_s = strlen(filename) * sizeof(char);
   startPackageSize += 2 + filename_s;
 
-  temp = malloc(startPackageSize); 
+  temp = malloc(startPackageSize);
   temp[i++] = START_C;               //C
   temp[i++] = START_T_FILESIZE;      //T
   temp[i++] = filesize_s;            //L
