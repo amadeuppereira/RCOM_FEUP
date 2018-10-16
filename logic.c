@@ -74,8 +74,7 @@ void printBuffer(char *buff, int finalLength){
 	printf("\n\n");
 }
 
-int readMsg(char **buff){
-	char *buf = malloc(sizeof(char) * 255);
+int readMsg(char *buf){
 
 	int res, i = 0;
 	int state = 0, isValidBCC;
@@ -110,7 +109,7 @@ int readMsg(char **buff){
 			// is bcc valid
 			isValidBCC  = (buf[3] == (XOR(buf[1], buf[2])));
 			if (isValidBCC){
-				*buff = buf;
+				//*buff = buf;
 				return i;
 			} else {
 				i = 0;
@@ -124,20 +123,19 @@ int readMsg(char **buff){
 }
 
 int llread(char *buffer){
+	int r = readMsg(buffer);
 
-	int r = readMsg(&buffer);
-
-	printf("Read result: %d\n", r);
-
+	// TODO: extrair pacote de comando da trama
+	
 	return r;
 }
 
 int llopen_Receiver(){
-	char *buf = NULL;
+	char buf[255];
 	int res;
   char ua[5] = {F , UA_A , UA_C , UA_BCC1 , F};
 
-	if (readMsg(&buf) == ERROR)
+	if (readMsg(buf) == ERROR)
 			return ERROR;
 
 	if (buf[2] == SET_C && SET_A == buf[1]){
@@ -149,9 +147,8 @@ int llopen_Receiver(){
 	return ERROR;
 }
 
-char *sendMsg(char *msg, int length){
+int sendMsg(char *msg, int length, char *response){
 	int res;
-	char *buf = NULL;
 	int STOP = FALSE;
 
 	struct sigaction action;
@@ -171,11 +168,11 @@ char *sendMsg(char *msg, int length){
 		flag = 0;
 
 		// read response
-		if (readMsg(&buf) != ERROR){
+		if (readMsg(response) != ERROR){
 			// handle response
 
 			// is bcc valid
-			int isValidBCC  = (buf[3] == (XOR(buf[1], buf[2])));
+			int isValidBCC  = (response[3] == (XOR(response[1], response[2])));
 
 			if (isValidBCC)
 				STOP = TRUE;
@@ -185,25 +182,27 @@ char *sendMsg(char *msg, int length){
 	counter = 0;
 
   if(STOP == TRUE){
-		printf("Received: 0x%x\n", buf[2]);
+		printf("Received: 0x%x\n", response[2]);
 	}
 	else
-		return NULL;
+		return ERROR;
 
   sleep(1);
   if ( tcsetattr(fd,TCSANOW,&oldtio) == ERROR) {
     perror("tcsetattr");
-    return NULL;
+    return ERROR;
   }
 
-  return buf;
+  return 0;
 }
 
 int llopen_Sender(){
   char set[5] = {F , SET_A , SET_C , 0x00 , F};
-	char *response = sendMsg(set, 5);
+	char response[255];
 
-	if (response != NULL && response[2] == UA_C)
+	int r = sendMsg(set, 5, response);
+
+	if (r != ERROR && response[2] == UA_C)
 		return 0;
 
 	return ERROR;
@@ -317,20 +316,23 @@ int llwrite(char *buffer, int length){
 	// envia buff3 na porta serie;
 	printBuffer(buff3, finalSize);
 
-	char *response = NULL;
+	char response[255];
 
-	while(response == NULL){
-		response = sendMsg(buff3, finalSize);
+	int r = sendMsg(buff3, finalSize, response);
 
-		if (response != NULL && ((buff3[2] == 0x40 && response[2] == RR0) || (buff3[2] == 0x00 && response[2] == RR1))){
+	while(r == ERROR){
+
+		if (r != ERROR && ((buff3[2] == 0x40 && response[2] == RR0) || (buff3[2] == 0x00 && response[2] == RR1))){
 			free(buff3);
 			return 0;
 		}
-		else if (response != NULL && ((buff3[2] == 0x40 && response[2] == REJ1) || (buff3[2] == 0x00 && response[2] == REJ0))){
-			response = NULL;
+		else if (r != ERROR && ((buff3[2] == 0x40 && response[2] == REJ1) || (buff3[2] == 0x00 && response[2] == REJ0))){
+			r = ERROR;
 		} else {
 			break;
 		}
+
+		r = sendMsg(buff3, finalSize, response);
 	}
 
 	free(buff3);

@@ -8,6 +8,7 @@
 #define START_C 0x02
 #define START_T_FILESIZE 0x00
 #define START_T_FILENAME 0x01
+#define PACKAGE_C 0x01
 #define END_C 0x03
 #define END_T_FILESIZE 0x00
 #define END_T_FILENAME 0x01
@@ -19,6 +20,7 @@ size_t getFileSize(const char* filename);
 int sendStartPackage(const char* filename, size_t fileSize);
 int generateStartPackage(const char* filename, size_t fileSize, char** startPackage);
 int sendFPackages(const char* filename);
+int generateFPackages(char * filedata, char ** fPackage, int packageCounter);
 int sendEndPackage(const char* filename, size_t fileSize);
 int generateEndPackage(const char* filename, size_t fileSize, char** endPackage);
 
@@ -60,7 +62,7 @@ int main(int argc, char** argv){
       printf("Connection Successful\n");
   }
 
-  // 2 gerar pacote start
+  //2 gerar pacote start
   if(sendStartPackage(argv[2], fileSize) == ERROR){
     printf("Error: could not send Start package\n");
     return ERROR;
@@ -150,18 +152,46 @@ int generateStartPackage(const char* filename, const size_t filesize, char** sta
 
 int sendFPackages(const char* filename){
   FILE *file;
-  char str[PACKAGE_DATA_SIZE];
+  char str[PACKAGE_DATA_SIZE - 4];
+  char * fPackage = NULL;
+  int counter = 0;
 
   file = fopen(filename, "r");
   if(file == NULL)
     return ERROR;
   
-  while(fgets(str, PACKAGE_DATA_SIZE, file) != NULL){
-    if(llwrite(str, PACKAGE_DATA_SIZE) == ERROR)
+  while(fgets(str, (PACKAGE_DATA_SIZE-4) , file) != NULL){
+    if(generateFPackages(str, &fPackage, counter) != 0)
+      return ERROR; 
+
+    if(llwrite(fPackage, PACKAGE_DATA_SIZE) == ERROR){
+      free(fPackage);
       return ERROR;
+    }
+
+    counter++;
+    free(fPackage);
   }
 
   fclose(file);
+  return 0;
+}
+
+int generateFPackages(char * filedata, char ** fPackage, int packageCounter){
+  char* temp;
+  int i = 0, j;
+
+  temp = malloc(PACKAGE_DATA_SIZE);
+  temp[i++] = PACKAGE_C;
+  temp[i++] = packageCounter;
+  temp[i++] = PACKAGE_DATA_SIZE / 256;
+  temp[i++] = PACKAGE_DATA_SIZE % 256;
+
+  for(j = 0; j < (PACKAGE_DATA_SIZE-4); j++, i++) {
+    temp[i] = filedata[j];
+  }
+
+  *fPackage = temp;
   return 0;
 }
 
