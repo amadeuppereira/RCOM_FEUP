@@ -5,7 +5,7 @@
 #define TRANSMITTER 1
 #define RECEIVER 2
 #define ERROR -1
-#define BUFFER_MAX_SIZE 255
+#define BUFFER_MAX_SIZE 140
 #define F 0x7e
 #define SETE_D 0x7d
 #define SETE_E 0x7e
@@ -24,4 +24,6 @@ int setup(char *port);
 int llopen(int type);
 int llwrite(char *buffer, int length);
 int llread(char *buffer);
+void printBuffer(char *buff, int finalLength);
+
 int llclose();

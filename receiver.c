@@ -35,6 +35,23 @@ int main(int argc, char** argv) {
         printf("Connection Successful\n");
     }
 
+    char *buffer = NULL;
+    int readResult = llread(buffer);
+    
+    printf("%x %d\n", buffer, readResult);
+
+    printBuffer(buffer, readResult);
+    /*while(readResult > 0){
+
+      // check c2 field
+      printBuffer(buffer, readResult);
+
+      free(buffer);
+      readResult = llread(buffer);
+
+      //printf("ciclo\n");
+    }*/
+
     // receiver(fd);
     return 0;
 }

@@ -65,13 +65,23 @@ int setup(char *port) {
   return fd;
 }
 
+void printBuffer(char *buff, int finalLength){
+	int i;
+	for(i = 0; i < finalLength; i++){
+		printf("0x%x ", buff[i]);
+	}
+
+	printf("\n\n");
+}
 
 int readMsg(char **buff){
 	char *buf = malloc(sizeof(char) * 255);
+
 	int res, i = 0;
 	int state = 0, isValidBCC;
 
 	while(flag == 0){
+
 		res = read(fd,buf+i,1);
 
 		switch(state) {
@@ -93,6 +103,7 @@ int readMsg(char **buff){
 			}
 			else if (res > 0 && *(buf+i) == F) {
 				state++;
+				i++;
 			}
 			break;
 		default:
@@ -110,6 +121,15 @@ int readMsg(char **buff){
 	}
 
 	return ERROR;
+}
+
+int llread(char *buffer){
+
+	int r = readMsg(&buffer);
+
+	printf("Read result: %d\n", r);
+
+	return r;
 }
 
 int llopen_Receiver(){
@@ -278,15 +298,6 @@ char *createMsg(char *buffer, int *finalSize){
 	*finalSize = *finalSize + 5;
 
 	return msg;
-}
-
-void printBuffer(char *buff, int finalLength){
-	int i;
-	for(i = 0; i < finalLength; i++){
-		printf("0x%x ", buff[i]);
-	}
-
-	printf("\n\n");
 }
 
 int llwrite(char *buffer, int length){

@@ -8,13 +8,19 @@
 #define START_C 0x02
 #define START_T_FILESIZE 0x00
 #define START_T_FILENAME 0x01
+#define END_C 0x03
+#define END_T_FILESIZE 0x00
+#define END_T_FILENAME 0x01
 #define RIGHT_SHIFT_CALC(size, index) 8*(size - index - 1)
 
 int fd;
 
 size_t getFileSize(const char* filename);
-void startPackageHandler(const char* filename, size_t fileSize);
+int sendStartPackage(const char* filename, size_t fileSize);
 int generateStartPackage(const char* filename, size_t fileSize, char** startPackage);
+int sendFPackages(const char* filename);
+int sendEndPackage(const char* filename, size_t fileSize);
+int generateEndPackage(const char* filename, size_t fileSize, char** endPackage);
 
 int main(int argc, char** argv){
 
@@ -54,21 +60,23 @@ int main(int argc, char** argv){
       printf("Connection Successful\n");
   }
 
-  // FILE *file;
-  // file = fopen(argv[2], "r");
-
   // 2 gerar pacote start
-  startPackageHandler(argv[2], fileSize);
+  if(sendStartPackage(argv[2], fileSize) == ERROR){
+    printf("Error: could not send Start package\n");
+    return ERROR;
+  }
 
-  //   // 3 gerar n pacotes com k dados lidos do ficheiro
-  //   generateFPackages();
+  // 3 gerar n pacotes com k dados lidos do ficheiro
+  if(sendFPackages(argv[2]) == ERROR){
+    printf("Error: could not send F packages\n");
+    return ERROR;
+  }
 
-  //   // 4 invocar llwrite(buff) passando em buf: start ou f on end (de D1 a Dn)
-
-  // } else {
-  //   printf("Error: could not read file %s\n", argv[2]);
-  //   return -1;
-  // }
+  // 4 gerar pacote start 
+  if(sendEndPackage(argv[2], fileSize) == ERROR){
+    printf("Error: could not send End package\n");
+    return ERROR;
+  }
 
   return 0;
 }
@@ -89,7 +97,7 @@ size_t getFileSize(const char* filename){
 
 }
 
-void startPackageHandler(const char* filename, size_t fileSize) {
+int sendStartPackage(const char* filename, size_t fileSize) {
     char* startPackage = NULL;
     int startPackageSize = generateStartPackage(filename, fileSize, &startPackage);
 
@@ -99,11 +107,12 @@ void startPackageHandler(const char* filename, size_t fileSize) {
     //   printf("0x%x (%c) | ", (unsigned char)startPackage[w], (unsigned char)startPackage[w]);
     // }
     // printf("\n");
-    printf("Start package size: %d\n", startPackageSize);
+    // printf("Start package size: %d\n", startPackageSize);
 
-    llwrite(startPackage, startPackageSize);
+    int ret = llwrite(startPackage, startPackageSize);
 
     free(startPackage);
+    return ret;
 }
 
 int generateStartPackage(const char* filename, const size_t filesize, char** start){
@@ -125,7 +134,6 @@ int generateStartPackage(const char* filename, const size_t filesize, char** sta
   temp[i++] = filesize_s;            //L
 
   for(j = 0; j < filesize_s; j++, i++) {
-    //temp[i] = (filesize >> (8*(filesize_s - j - 1))) & 0xFF; //V
     temp[i] = (filesize >> RIGHT_SHIFT_CALC(filesize_s, j)) & 0xFF; //V
   }
 
@@ -138,4 +146,72 @@ int generateStartPackage(const char* filename, const size_t filesize, char** sta
 
   *start = temp;
   return startPackageSize;
+}
+
+int sendFPackages(const char* filename){
+  FILE *file;
+  char str[PACKAGE_DATA_SIZE];
+
+  file = fopen(filename, "r");
+  if(file == NULL)
+    return ERROR;
+  
+  while(fgets(str, PACKAGE_DATA_SIZE, file) != NULL){
+    if(llwrite(str, PACKAGE_DATA_SIZE) == ERROR)
+      return ERROR;
+  }
+
+  fclose(file);
+  return 0;
+}
+
+int sendEndPackage(const char* filename, size_t fileSize) {
+    char* endPackage = NULL;
+    int endPackageSize = generateEndPackage(filename, fileSize, &endPackage);
+
+    // printf("handler: %d\n", endPackageSize);
+    //   int w;
+    // for(w = 0; w < endPackageSize; w++) {
+    //   printf("0x%x (%c) | ", (unsigned char)endPackage[w], (unsigned char)endPackage[w]);
+    // }
+    // printf("\n");
+    // printf("End package size: %d\n", endPackageSize);
+
+    int ret = llwrite(endPackage, endPackageSize);
+
+    free(endPackage);
+    return ret;
+}
+
+int generateEndPackage(const char* filename, const size_t filesize, char** end){
+  char* temp;
+  int i = 0, j;
+  int endPackageSize = 1;
+
+  //filesize tlv
+  int filesize_s = sizeof(filesize);
+  endPackageSize += 2 + filesize_s;
+
+  //filename tlv
+  int filename_s = strlen(filename) * sizeof(char);
+  endPackageSize += 2 + filename_s;
+
+  temp = malloc(endPackageSize);
+  temp[i++] = END_C;               //C
+  temp[i++] = END_T_FILESIZE;      //T
+  temp[i++] = filesize_s;            //L
+
+  for(j = 0; j < filesize_s; j++, i++) {
+    temp[i] = (filesize >> RIGHT_SHIFT_CALC(filesize_s, j)) & 0xFF; //V
+  }
+
+  temp[i++] = END_T_FILENAME;  //T
+  temp[i++] = filename_s;        //L
+
+  for(j = 0; j < filename_s; j++, i++) {
+    temp[i] = *(filename + j);   //V
+  }
+
+  *end = temp;
+  return endPackageSize;
 }
