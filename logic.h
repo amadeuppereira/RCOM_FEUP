@@ -19,6 +19,7 @@
 #define RR1 0x85
 #define REJ0 0x01
 #define REJ1 0x81
+#define PACKAGE_DATA_SIZE 260
 
 int setup(char *port);
 int llopen(int type);

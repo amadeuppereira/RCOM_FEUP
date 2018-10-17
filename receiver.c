@@ -42,8 +42,8 @@ int main(int argc, char** argv) {
   do {
     char buffer[255];
     readResult = llread(buffer);
-
-    handleRead(buffer, readResult);
+    //printBuffer(buffer, 30);
+    //handleRead(buffer, readResult);
 
   } while(readResult > 0);
 
