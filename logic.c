@@ -137,7 +137,9 @@ int rejectMsg(char cflag){
 		char rej[5] = {F, UA_A, c, bcc1, F};
 
 		// write reject
-		return write(fd, rej, 5);
+		int ret = write(fd, rej, 5);
+		printf("Send reject\n");
+		return ret;
 }
 
 int acceptMsg(char cflag){
@@ -155,18 +157,21 @@ int acceptMsg(char cflag){
 		char rej[5] = {F, UA_A, c, bcc1, F};
 
 		// write accept
-		return write(fd, rej, 5);
+		int ret = write(fd, rej, 5);
+		printf("Send accept\n");
+		return ret;
 }
 
 int llread(char *buffer){
-	char temp[255], temp2[255], temp3[255];
+	char temp[PACKAGE_DATA_SIZE +7], temp2[PACKAGE_DATA_SIZE +7], temp3[PACKAGE_DATA_SIZE +7];
 	int length = readMsg(temp);
+	printf("%x\n",C_FLAG);
+	printBuffer(temp, length);
 
-	// fazer verificação do header
-	if (temp[2] != getCFlag()) {
+	if (temp[2] != C_FLAG) {
 		// rejeitar mensagem
 		rejectMsg(temp[2]);
-
+		llread(buffer);
 		return ERROR;
 	}
 
@@ -175,6 +180,12 @@ int llread(char *buffer){
 	for (i = 4, j = 0 ; i < length-1; i++, j++){
 		temp2[j] = temp[i];
 	}
+	length = j;
+	// ver valor do bcc2 se está correcto
+	int isValidBCC = (temp2[length-1] == (XOR(temp2[1], temp2[2])));
+	//printf("bcc2: 0x%x\n",temp2[length-1]);
+	//printf("bcc:%d\n", isValidBCC);
+	//printBuffer(temp2, length);
 
 	// extrair pacote de comando da trama - destuffing
 	length = j;
@@ -188,14 +199,12 @@ int llread(char *buffer){
 			i++;
 		} 
 		else {
-			temp3[j] = temp[i];
+			temp3[j] = temp2[i];
 		}
 	}
+	//printBuffer(temp3, j);
 
-	// ver valor do bcc2 se está correcto
 	length = j;
-	int isValidBCC = (temp3[length-1] == (XOR(temp3[1], temp3[2])));
-
 	if (isValidBCC){
 		// copiar para o buffer sem o bcc2
 		for (i = 0; i < length-1; i++){
@@ -203,12 +212,15 @@ int llread(char *buffer){
 		}
 
 		// responder mensagem com sucesso
+		getCFlag();
 		acceptMsg(temp[2]);
 		return i;
 
 	} else {
 		// rejeitar mensagem
+		printf("bcc");
 		rejectMsg(temp[2]);
+		llread(buffer);
 		return ERROR;
 	}
 }
@@ -271,10 +283,10 @@ int sendMsg(char *msg, int length, char *response){
 		return ERROR;
 
   sleep(1);
-  if ( tcsetattr(fd,TCSANOW,&oldtio) == ERROR) {
-    perror("tcsetattr");
-    return ERROR;
-  }
+//   if ( tcsetattr(fd,TCSANOW,&oldtio) == ERROR) {
+//     perror("tcsetattr");
+//     return ERROR;
+//   }
 
   return 0;
 }
