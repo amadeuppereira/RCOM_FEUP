@@ -29,7 +29,8 @@ int main(int argc, char** argv){
   // parse arguments
   if ((argc < 3) ||
       ((strcmp("/dev/ttyS0", argv[1])!=0) &&
-      (strcmp("/dev/ttyS1", argv[1])!=0) )) {
+      (strcmp("/dev/ttyS1", argv[1])!=0) &&
+      (strcmp("/dev/ttyS2", argv[1])!=0))) {
     printf("Usage:%s [serial port] [file path]\n", argv[0]);
     exit(-1);
   }
