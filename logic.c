@@ -126,7 +126,7 @@ int rejectMsg(char cflag){
 	// rejeitar mensagem
 		char c;
 		if (cflag == 0x40){
-			c = REJ1;	
+			c = REJ1;
 		}
 		else if (cflag == 0x00){
 			 c = REJ0;
@@ -146,7 +146,7 @@ int acceptMsg(char cflag){
 	// aceitar mensagem
 		char c;
 		if (cflag == 0x40){
-			c = RR1;	
+			c = RR1;
 		}
 		else if (cflag == 0x00){
 			 c = RR0;
@@ -197,7 +197,7 @@ int llread(char *buffer){
 		else if (temp2[i] == SETE_D && temp2[i+1] == 0x5d){
 			temp3[j] = SETE_D;
 			i++;
-		} 
+		}
 		else {
 			temp3[j] = temp2[i];
 		}
@@ -277,16 +277,18 @@ int sendMsg(char *msg, int length, char *response){
 	counter = 0;
 
   if(STOP == TRUE){
-		printf("Received: 0x%x\n", response[2]);
+		//printf("Received: 0x%x\n", response[2]);
 	}
 	else
 		return ERROR;
 
   sleep(1);
+  
 //   if ( tcsetattr(fd,TCSANOW,&oldtio) == ERROR) {
 //     perror("tcsetattr");
 //     return ERROR;
 //   }
+
 
   return 0;
 }
@@ -409,33 +411,40 @@ int llwrite(char *buffer, int length){
 	free(buff2);
 
 	// envia buff3 na porta serie;
-	printBuffer(buff3, finalSize);
+	//printBuffer(buff3, finalSize);
 
 	char response[255];
+	int rej = 1;
 
-	int r = sendMsg(buff3, finalSize, response);
+	do {
+		int r = sendMsg(buff3, finalSize, response);
+		printf("Package Received: ");
+		printBuffer(response, 5);
 
-	while(r == ERROR){
+		if(r == ERROR){
+			return ERROR;
+		}
 
 		if (r != ERROR && ((buff3[2] == 0x40 && response[2] == (char)RR0) || (buff3[2] == 0x00 && response[2] == (char)RR1))){
-			free(buff3);
+			rej = 0;
 			return 0;
 		}
 		else if (r != ERROR && ((buff3[2] == 0x40 && response[2] == (char)REJ1) || (buff3[2] == 0x00 && response[2] == (char)REJ0))){
-			r = ERROR;
+			rej = 1;
 		} else {
 			break;
 		}
-
-		r = sendMsg(buff3, finalSize, response);
-	}
+	} while(rej);
 
 	free(buff3);
-	return ERROR;
+	return 0;
 }
 
 int llclose(){
 	sleep(1);
-	tcsetattr(fd,TCSANOW,&oldtio);
+	if ( tcsetattr(fd,TCSANOW,&oldtio) == ERROR) {
+    perror("tcsetattr");
+    return ERROR;
+  }
 	return close(fd);
 }
