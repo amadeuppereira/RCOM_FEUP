@@ -122,9 +122,53 @@ int readMsg(char *buf){
 	return ERROR;
 }
 
+int rejectMsg(char cflag){
+	// rejeitar mensagem
+		char c;
+		if (cflag == 0x40){
+			c = REJ1;	
+		}
+		else if (cflag == 0x00){
+			 c = REJ0;
+		}
+
+		// rej msg bcc1
+		char bcc1 = XOR(UA_A, c);
+		char rej[5] = {F, UA_A, c, bcc1, F};
+
+		// write reject
+		return write(fd, rej, 5);
+}
+
+int acceptMsg(char cflag){
+	// aceitar mensagem
+		char c;
+		if (cflag == 0x40){
+			c = RR1;	
+		}
+		else if (cflag == 0x00){
+			 c = RR0;
+		}
+
+		// accept msg bcc1
+		char bcc1 = XOR(UA_A, c);
+		char rej[5] = {F, UA_A, c, bcc1, F};
+
+		// write accept
+		return write(fd, rej, 5);
+}
+
 int llread(char *buffer){
 	char temp[255], temp2[255], temp3[255];
 	int length = readMsg(temp);
+
+	// fazer verificação do header
+	if (temp[2] != getCFlag()) {
+		// rejeitar mensagem
+		rejectMsg(temp[2]);
+
+		return ERROR;
+	}
 
 	// remover cabeçalho e flag inicial
 	int i, j;
@@ -152,14 +196,21 @@ int llread(char *buffer){
 	length = j;
 	int isValidBCC = (temp3[length-1] == (XOR(temp3[1], temp3[2])));
 
-	if (!isValidBCC) return ERROR;
-	
-	// copiar para o buffer sem o bcc2
-	for (i = 0; i < length-1; i++){
-		buffer[i] = temp3[i];
-	}
+	if (isValidBCC){
+		// copiar para o buffer sem o bcc2
+		for (i = 0; i < length-1; i++){
+			buffer[i] = temp3[i];
+		}
 
-	return i;
+		// responder mensagem com sucesso
+		acceptMsg(temp[2]);
+		return i;
+
+	} else {
+		// rejeitar mensagem
+		rejectMsg(temp[2]);
+		return ERROR;
+	}
 }
 
 int llopen_Receiver(){

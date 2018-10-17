@@ -43,7 +43,6 @@ int main(int argc, char** argv) {
     char buffer[255];
     readResult = llread(buffer);
 
-    // check c2 field
     handleRead(buffer, readResult);
 
   } while(readResult > 0);
@@ -73,19 +72,22 @@ void handleIPkg(char *buffer, int size){
 void handleEndPkg(char *buffer, int size){
   // percebe que e o pacote end e termina.
   fclose(file);
+
+  // TODO: llclose se for pra fehcar apos 1 transferencia.
 }
 
 void handleRead(char *buffer, int size){
 
   printBuffer(buffer, size);
 
-  // TODO: lidar com o c2 do pacote de comando
+  //lidar com o c2 do pacote de comando
+  char c2 = buffer[0];
 
-  /*switch(c2){
+  switch(c2){
     case 0x02:
       handleStartPkg(buffer, size);
     break;
-    case 0x01:.
+    case 0x01:
       handleIPkg(buffer, size);
     break;
     case 0x03:
@@ -93,7 +95,7 @@ void handleRead(char *buffer, int size){
     break;
     default:
     break;
-  }*/
+  }
 }
 
 // void receiver(int fd) {
