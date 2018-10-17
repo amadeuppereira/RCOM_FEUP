@@ -123,11 +123,43 @@ int readMsg(char *buf){
 }
 
 int llread(char *buffer){
-	int r = readMsg(buffer);
+	char temp[255], temp2[255], temp3[255];
+	int length = readMsg(temp);
 
-	// TODO: extrair pacote de comando da trama
+	// remover cabeçalho e flag inicial
+	int i, j;
+	for (i = 4, j = 0 ; i < length-1; i++, j++){
+		temp2[j] = temp[i];
+	}
+
+	// extrair pacote de comando da trama - destuffing
+	length = j;
+	for (i = 0, j = 0; i < length - 1 ; i++, j++) {
+		if (temp2[i] == SETE_D && temp2[i+1] == 0x5e){
+			temp3[j] = SETE_E;
+			i++;
+		}
+		else if (temp2[i] == SETE_D && temp2[i+1] == 0x5d){
+			temp3[j] = SETE_D;
+			i++;
+		} 
+		else {
+			temp3[j] = temp[i];
+		}
+	}
+
+	// ver valor do bcc2 se está correcto
+	length = j;
+	int isValidBCC = (temp3[length-1] == (XOR(temp3[1], temp3[2])));
+
+	if (!isValidBCC) return ERROR;
 	
-	return r;
+	// copiar para o buffer sem o bcc2
+	for (i = 0; i < length-1; i++){
+		buffer[i] = temp3[i];
+	}
+
+	return i;
 }
 
 int llopen_Receiver(){
@@ -322,11 +354,11 @@ int llwrite(char *buffer, int length){
 
 	while(r == ERROR){
 
-		if (r != ERROR && ((buff3[2] == 0x40 && response[2] == RR0) || (buff3[2] == 0x00 && response[2] == RR1))){
+		if (r != ERROR && ((buff3[2] == 0x40 && response[2] == (char)RR0) || (buff3[2] == 0x00 && response[2] == (char)RR1))){
 			free(buff3);
 			return 0;
 		}
-		else if (r != ERROR && ((buff3[2] == 0x40 && response[2] == REJ1) || (buff3[2] == 0x00 && response[2] == REJ0))){
+		else if (r != ERROR && ((buff3[2] == 0x40 && response[2] == (char)REJ1) || (buff3[2] == 0x00 && response[2] == (char)REJ0))){
 			r = ERROR;
 		} else {
 			break;
