@@ -74,7 +74,7 @@ int main(int argc, char** argv){
     return ERROR;
   }
 
-  // 4 gerar pacote start 
+  // 4 gerar pacote start
   if(sendEndPackage(argv[2], fileSize) == ERROR){
     printf("Error: could not send End package\n");
     return ERROR;
@@ -159,11 +159,11 @@ int sendFPackages(const char* filename){
   file = fopen(filename, "r");
   if(file == NULL)
     return ERROR;
-  
+
   while(fgets(str, (PACKAGE_DATA_SIZE-4) , file) != NULL){
     if(generateFPackages(str, &fPackage, counter) != 0)
-      return ERROR; 
-
+      return ERROR;
+      printBuffer(fPackage, PACKAGE_DATA_SIZE);
     if(llwrite(fPackage, PACKAGE_DATA_SIZE) == ERROR){
       free(fPackage);
       return ERROR;
