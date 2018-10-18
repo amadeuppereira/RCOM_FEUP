@@ -68,7 +68,7 @@ int setup(char *port) {
 void printBuffer(char *buff, int finalLength){
 	int i;
 	for(i = 0; i < finalLength; i++){
-		printf("0x%x ", buff[i]);
+		printf("%d: 0x%x ", i, buff[i]);
 	}
 
 	printf("\n\n");
@@ -166,7 +166,6 @@ int llread(char *buffer){
 	char temp[PACKAGE_DATA_SIZE +7], temp2[PACKAGE_DATA_SIZE +7], temp3[PACKAGE_DATA_SIZE +7];
 	int length = readMsg(temp);
 	printf("%x\n",C_FLAG);
-	printBuffer(temp, length);
 
 	if (temp[2] != C_FLAG) {
 		// rejeitar mensagem
@@ -185,7 +184,6 @@ int llread(char *buffer){
 	int isValidBCC = (temp2[length-1] == (XOR(temp2[1], temp2[2])));
 	//printf("bcc2: 0x%x\n",temp2[length-1]);
 	//printf("bcc:%d\n", isValidBCC);
-	//printBuffer(temp2, length);
 
 	// extrair pacote de comando da trama - destuffing
 	length = j;
@@ -283,7 +281,7 @@ int sendMsg(char *msg, int length, char *response){
 		return ERROR;
 
   sleep(1);
-  
+
 //   if ( tcsetattr(fd,TCSANOW,&oldtio) == ERROR) {
 //     perror("tcsetattr");
 //     return ERROR;

@@ -13,6 +13,7 @@
 #define UA_C 0x07
 #define SET_C 0x03
 #define SET_A 0x03
+#define L2 0x08
 #define XOR(a, b) a^b
 #define UA_BCC1 XOR(UA_A, UA_C)
 #define RR0 0x05
@@ -26,4 +27,5 @@ int llopen(int type);
 int llwrite(char *buffer, int length);
 int llread(char *buffer);
 int llclose();
+void copyBuffer(char *dest, char *source, int length);
 void printBuffer(char *buff, int finalLength);

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 //states
 #define START 0
@@ -44,7 +45,7 @@ int main(int argc, char** argv) {
     char buffer[255];
     readResult = llread(buffer);
     //printBuffer(buffer, 30);
-    //handleRead(buffer, readResult);
+    handleRead(buffer, readResult);
 
   } while(readResult > 0);
 
@@ -56,7 +57,11 @@ int main(int argc, char** argv) {
 void handleStartPkg(char *buffer, int size){
   // esta a receber pacote start, extrai informacao e abre ficheiro em disco em modo de escrita.
 
-  file = fopen("file.txt", "w");
+  // TODO: extrair nome do ficheiro
+
+  // TODO: extrair tamanho do ficheiro
+
+  file = fopen("out/file.gif", "wb");
 
   if (file == NULL){
       printf("Error opening file!\n");
@@ -65,21 +70,38 @@ void handleStartPkg(char *buffer, int size){
 }
 
 void handleIPkg(char *buffer, int size){
-  // percebe que o pacote comtem dados do ficheiro e armazena em disco.
+  // percebe que o pacote comtem dados do ficheiro e armazena em disco.);
+  printf("\nData package received: \n");
+  // TODO: extrair N
+  printf("N: %d\n", buffer[1]);
 
-  // TODO: fprintf(file, buffer);
+  // parse L1  e L2
+  int length = 256 * buffer[2] + buffer[3];
+  printf("Tamanho dos dados: %d\n", length);
+  printf("Buffer size: %d\n", size);
+
+  if (file == NULL){
+    printf("Error: No file opened.\n");
+    exit(1);
+  }
+
+  // TODO: erro no byte 256
+  
+  write(fileno(file), buffer+4, length);
+
+  printBuffer(buffer + 4, length);
 }
 
 void handleEndPkg(char *buffer, int size){
   // percebe que e o pacote end e termina.
+  printf("Finished writing, closing file!\n");
+
   fclose(file);
 
-  // TODO: llclose se for pra fehcar apos 1 transferencia.
+  // TODO: llclose se for pra fechar apos 1 transferencia.
 }
 
 void handleRead(char *buffer, int size){
-
-  printBuffer(buffer, size);
 
   //lidar com o c2 do pacote de comando
   char c2 = buffer[0];
