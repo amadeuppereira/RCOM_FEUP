@@ -29,8 +29,7 @@ int main(int argc, char** argv){
   // parse arguments
   if ((argc < 3) ||
       ((strcmp("/dev/ttyS0", argv[1])!=0) &&
-      (strcmp("/dev/ttyS1", argv[1])!=0) &&
-      (strcmp("/dev/ttyS2", argv[1])!=0))) {
+      (strcmp("/dev/ttyS1", argv[1])!=0))) {
     printf("Usage:%s [serial port] [file path]\n", argv[0]);
     exit(-1);
   }
@@ -56,7 +55,7 @@ int main(int argc, char** argv){
   }
 
   if(llopen(TRANSMITTER) == ERROR){
-    printf("Error: could not write to the receiver\n");
+    printf("Error: could not connect to the receiver\n");
     exit(-1);
   }
   else {
@@ -153,7 +152,7 @@ int generateStartPackage(const char* filename, const size_t filesize, char** sta
 
 int sendFPackages(const char* filename){
   FILE *file;
-  char str[PACKAGE_DATA_SIZE - 4];
+  char str[PACKAGE_DATA_SIZE];
   char * fPackage = NULL;
   int counter = 0;
 
@@ -161,11 +160,13 @@ int sendFPackages(const char* filename){
   if(file == NULL)
     return ERROR;
 
-  while(fgets(str, (PACKAGE_DATA_SIZE-4) , file) != NULL){
-    if(generateFPackages(str, &fPackage, counter) != 0)
-      return ERROR;
-      printBuffer(fPackage, PACKAGE_DATA_SIZE);
-    if(llwrite(fPackage, PACKAGE_DATA_SIZE) == ERROR){
+  while(fgets(str, PACKAGE_DATA_SIZE , file) != NULL){
+    
+    generateFPackages(str, &fPackage, counter);
+    
+    printBuffer(str, PACKAGE_DATA_SIZE);
+    //printBuffer(fPackage, PACKAGE_DATA_SIZE +4);
+    if(llwrite(fPackage, PACKAGE_DATA_SIZE +4) == ERROR){
       free(fPackage);
       return ERROR;
     }
@@ -182,13 +183,13 @@ int generateFPackages(char * filedata, char ** fPackage, int packageCounter){
   char* temp;
   int i = 0, j;
 
-  temp = malloc(PACKAGE_DATA_SIZE);
+  temp = malloc(PACKAGE_DATA_SIZE + 4);
   temp[i++] = PACKAGE_C;
   temp[i++] = packageCounter;
   temp[i++] = PACKAGE_DATA_SIZE / 256;
   temp[i++] = PACKAGE_DATA_SIZE % 256;
 
-  for(j = 0; j < (PACKAGE_DATA_SIZE-4); j++, i++) {
+  for(j = 0; j < PACKAGE_DATA_SIZE; j++, i++) {
     temp[i] = filedata[j];
   }
 

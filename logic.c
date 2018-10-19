@@ -109,7 +109,6 @@ int readMsg(char *buf){
 			// is bcc valid
 			isValidBCC  = (buf[3] == (XOR(buf[1], buf[2])));
 			if (isValidBCC){
-				//*buff = buf;
 				return i;
 			} else {
 				i = 0;
@@ -250,7 +249,6 @@ int sendMsg(char *msg, int length, char *response){
 	action.sa_flags = 0;
 	sigaction(SIGALRM, &action, NULL);
 
-
 	while (STOP==FALSE && counter < numberOfTries) {
 		// write on serial port
 		res = write(fd, msg, sizeof(char) * length);
@@ -263,7 +261,6 @@ int sendMsg(char *msg, int length, char *response){
 		// read response
 		if (readMsg(response) != ERROR){
 			// handle response
-
 			// is bcc valid
 			int isValidBCC  = (response[3] == (XOR(response[1], response[2])));
 
@@ -274,19 +271,10 @@ int sendMsg(char *msg, int length, char *response){
 	// reset global counter
 	counter = 0;
 
-  if(STOP == TRUE){
-		//printf("Received: 0x%x\n", response[2]);
-	}
-	else
-		return ERROR;
+  if(STOP != TRUE)
+	return ERROR;
 
   sleep(1);
-
-//   if ( tcsetattr(fd,TCSANOW,&oldtio) == ERROR) {
-//     perror("tcsetattr");
-//     return ERROR;
-//   }
-
 
   return 0;
 }
@@ -411,12 +399,12 @@ int llwrite(char *buffer, int length){
 	// envia buff3 na porta serie;
 	//printBuffer(buff3, finalSize);
 
-	char response[255];
+	char response[5];
 	int rej = 1;
 
 	do {
 		int r = sendMsg(buff3, finalSize, response);
-		printf("Package Received: ");
+		printf("Response Received: ");
 		printBuffer(response, 5);
 
 		if(r == ERROR){
