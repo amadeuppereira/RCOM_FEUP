@@ -163,9 +163,8 @@ int acceptMsg(char cflag){
 }
 
 int llread(char *buffer){
-	char temp[PACKAGE_DATA_SIZE +7], temp2[PACKAGE_DATA_SIZE +7], temp3[PACKAGE_DATA_SIZE +7];
+	char temp[(PACKAGE_DATA_SIZE+4) *2], temp2[(PACKAGE_DATA_SIZE+4) *2], temp3[(PACKAGE_DATA_SIZE+4) *2];
 	int length = readMsg(temp);
-	printf("%x\n",C_FLAG);
 
 	if (temp[2] != C_FLAG) {
 		// rejeitar mensagem
@@ -204,8 +203,7 @@ int llread(char *buffer){
 
 	length = j;
 	if (isValidBCC){
-		// copiar para o buffer sem o bcc2
-		for (i = 0; i < length-1; i++){
+		for (i = 0; i < length; i++){
 			buffer[i] = temp3[i];
 		}
 

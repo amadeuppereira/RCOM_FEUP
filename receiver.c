@@ -20,8 +20,7 @@ void handleRead(char *buffer, int size);
 int main(int argc, char** argv) {
   if ( (argc < 2) ||
   ((strcmp("/dev/ttyS0", argv[1])!=0) &&
-  (strcmp("/dev/ttyS1", argv[1])!=0) &&
-  (strcmp("/dev/ttyS2", argv[1])!=0))) {
+  (strcmp("/dev/ttyS1", argv[1])!=0))) {
     printf("Usage:\tnserial SerialPort\n\tex: nserial /dev/ttyS1\n");
     exit(1);
   }
@@ -42,9 +41,9 @@ int main(int argc, char** argv) {
   int readResult;
 
   do {
-    char buffer[255];
+    char buffer[PACKAGE_DATA_SIZE+4];
     readResult = llread(buffer);
-    //printBuffer(buffer, 30);
+
     handleRead(buffer, readResult);
 
   } while(readResult > 0);
@@ -61,7 +60,7 @@ void handleStartPkg(char *buffer, int size){
 
   // TODO: extrair tamanho do ficheiro
 
-  file = fopen("out/file.gif", "wb");
+  file = fopen("file.gif", "wb");
 
   if (file == NULL){
       printf("Error opening file!\n");
@@ -76,20 +75,27 @@ void handleIPkg(char *buffer, int size){
   printf("N: %d\n", buffer[1]);
 
   // parse L1  e L2
-  int length = 256 * buffer[2] + buffer[3];
-  printf("Tamanho dos dados: %d\n", length);
-  printf("Buffer size: %d\n", size);
+  // int length = 256 * buffer[2] + buffer[3];
+  // printf("Tamanho dos dados: %d\n", length);
+  // printf("Buffer size: %d\n", size);
 
   if (file == NULL){
     printf("Error: No file opened.\n");
     exit(1);
   }
 
-  // TODO: erro no byte 256
-  
-  write(fileno(file), buffer+4, length);
+  int length = size-4;
+  char * temp;
+  temp = malloc(length);
+  int i;
+  for(i = 0; i < length; i++) {
+    temp[i] = buffer[i+4];
+  }
 
-  printBuffer(buffer + 4, length);
+  printBuffer(temp, length);
+  
+  write(fileno(file), temp, length);
+
 }
 
 void handleEndPkg(char *buffer, int size){
