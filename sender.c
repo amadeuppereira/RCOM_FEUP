@@ -20,7 +20,7 @@ size_t getFileSize(const char* filename);
 int sendStartPackage(const char* filename, size_t fileSize);
 int generateStartPackage(const char* filename, size_t fileSize, char** startPackage);
 int sendFPackages(const char* filename);
-int generateFPackages(char * filedata, char ** fPackage, int packageCounter);
+int generateFPackages(char * filedata, char ** fPackage, int packageCounter, int size_package);
 int sendEndPackage(const char* filename, size_t fileSize);
 int generateEndPackage(const char* filename, size_t fileSize, char** endPackage);
 
@@ -156,17 +156,35 @@ int sendFPackages(const char* filename){
   char * fPackage = NULL;
   int counter = 0;
 
-  file = fopen(filename, "r");
+  file = fopen(filename, "rb");
   if(file == NULL)
     return ERROR;
 
-  while(fgets(str, PACKAGE_DATA_SIZE , file) != NULL){
-    
-    generateFPackages(str, &fPackage, counter);
-    
-    printBuffer(str, PACKAGE_DATA_SIZE);
-    //printBuffer(fPackage, PACKAGE_DATA_SIZE +4);
-    if(llwrite(fPackage, PACKAGE_DATA_SIZE +4) == ERROR){
+  long filelength;
+  fseek(file,0,SEEK_END);
+  filelength = ftell(file);
+  rewind(file);
+  printf("file size: %ld\n", filelength);
+  char * buffer;
+  buffer = (char*) malloc((filelength+1)*sizeof(char));
+  fread(buffer, filelength, 1, file);
+
+  int i = 0, j;
+  int STOP = FALSE;
+
+  while(STOP == FALSE){
+    for(j = 0; j < PACKAGE_DATA_SIZE; j++, i++){
+      if(i == filelength){
+        STOP = TRUE;
+        break;
+      }
+      str[j] = buffer[i];
+    }
+    printBuffer(str, j);
+
+    generateFPackages(str, &fPackage, counter, j);
+
+    if(llwrite(fPackage, j+4) == ERROR){
       free(fPackage);
       return ERROR;
     }
@@ -179,17 +197,17 @@ int sendFPackages(const char* filename){
   return 0;
 }
 
-int generateFPackages(char * filedata, char ** fPackage, int packageCounter){
+int generateFPackages(char * filedata, char ** fPackage, int packageCounter, int size_package){
   char* temp;
   int i = 0, j;
 
-  temp = malloc(PACKAGE_DATA_SIZE + 4);
+  temp = malloc(size_package + 4);
   temp[i++] = PACKAGE_C;
   temp[i++] = packageCounter;
-  temp[i++] = PACKAGE_DATA_SIZE / 256;
-  temp[i++] = PACKAGE_DATA_SIZE % 256;
+  temp[i++] = size_package / PACKAGE_DATA_SIZE;
+  temp[i++] = size_package % PACKAGE_DATA_SIZE;
 
-  for(j = 0; j < PACKAGE_DATA_SIZE; j++, i++) {
+  for(j = 0; j < size_package; j++, i++) {
     temp[i] = filedata[j];
   }
 
