@@ -272,7 +272,7 @@ int sendMsg(char *msg, int length, char *response){
   if(STOP != TRUE)
 	return ERROR;
 
-  sleep(1);
+  //sleep(1);
 
   return 0;
 }

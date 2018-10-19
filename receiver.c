@@ -73,6 +73,8 @@ void handleIPkg(char *buffer, int size){
   printf("\nData package received: \n");
   // TODO: extrair N
   printf("N: %d\n", buffer[1]);
+  printf("L1: %d\n", buffer[2]);
+  printf("L2: %d\n", buffer[3]);
 
   // parse L1  e L2
   // int length = 256 * buffer[2] + buffer[3];
@@ -126,9 +128,3 @@ void handleRead(char *buffer, int size){
     break;
   }
 }
-
-// void receiver(int fd) {
-//     char buf[BUFFER_MAX_SIZE];
-//     state = START;
-
-// }
