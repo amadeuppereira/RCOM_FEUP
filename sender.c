@@ -91,21 +91,21 @@ int main(int argc, char** argv){
   return 0;
 }
 
-// size_t getFileSize(const char* filename){
+size_t getFileSize(const char* filename){
 
-//   struct stat fileStat;
+  struct stat fileStat;
 
-//   if (stat(filename, &fileStat) < 0 ){
-//     return -1;
-//   }
+  if (stat(filename, &fileStat) < 0 ){
+    return -1;
+  }
 
-//   if (!S_ISREG(fileStat.st_mode)) {
-//     return -2;
-//   }
+  if (!S_ISREG(fileStat.st_mode)) {
+    return -2;
+  }
 
-//   return fileStat.st_size;
+  return fileStat.st_size;
 
-// }
+}
 
 // int sendStartPackage(const char* filename, size_t fileSize) {
 //     char* startPackage = NULL;
