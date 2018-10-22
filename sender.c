@@ -34,6 +34,12 @@ int main(int argc, char** argv){
     exit(-1);
   }
 
+  struct sigaction action;
+	action.sa_handler = alarm_function;
+	sigemptyset(&action.sa_mask);
+	action.sa_flags = 0;
+	sigaction(SIGALRM, &action, NULL);
+
   // 1 ler dados do ficheiro
   size_t fileSize = getFileSize(argv[2]);
   if(fileSize == -1) {

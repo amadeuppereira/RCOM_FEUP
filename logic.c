@@ -16,7 +16,6 @@ int flag = 0;
 int counter = 0;
 int fd;
 char C_FLAG = 0x0;
-int numberOfTries = 3;
 
 char getCFlag(){
 	if (C_FLAG == 0x0){
@@ -74,12 +73,18 @@ void printBuffer(char *buff, int finalLength){
 	printf("\n\n");
 }
 
-int readMsg(char *buf){
+int readFrame(Frame* f){
 
+	char* buf = malloc(sizeof(char) * 10);
+	int bufferSize = 10;
 	int res, i = 0;
-	int state = 0, isValidBCC;
+	int state = 0;
 
 	while(flag == 0){
+		if(i == bufferSize) {
+			bufferSize *= 2;
+			buf = realloc(buf, sizeof(char) * bufferSize);
+		}
 
 		res = read(fd,buf+i,1);
 
@@ -106,15 +111,9 @@ int readMsg(char *buf){
 			}
 			break;
 		default:
-			// is bcc valid
-			isValidBCC  = (buf[3] == (XOR(buf[1], buf[2])));
-			if (isValidBCC){
-				return i;
-			} else {
-				i = 0;
-				state = 0;
-			}
-			break;
+			f->msg = buf;
+			f->length = i;
+			return 0;
 		}
 	}
 
@@ -221,53 +220,59 @@ int llread(char *buffer){
 }
 
 int llopen_Receiver(){
-	char buf[255];
-	int res;
-  char ua[5] = {F , UA_A , UA_C , UA_BCC1 , F};
+	Frame ua = {
+		.msg = {F , UA_A , UA_C , UA_BCC1 , F},
+		.length = 5
+	};
+	
+	Frame f;
+	int ret;
 
-	if (readMsg(buf) == ERROR)
-			return ERROR;
+read_frame:
+	ret = readFrame(&f);
 
-	if (buf[2] == SET_C && SET_A == buf[1]){
-		res = write(fd, ua, 5);
-		fflush(NULL);
-		return res;
+	if (ret != ERROR) {
+		int frame_type = checkFrame(f);
+		if(frame_type == SET) {
+			sendMsg(ua);
+			free(f.msg);
+			return 0;
+		}
+		else {
+			goto read_frame;
+		}
 	}
-
+	
 	return ERROR;
 }
 
-int sendMsg(char *msg, int length, char *response){
+int sendMsg(Frame f) {
+	// write on serial port
+	int res = write(fd, f.msg, sizeof(char) * f.length);
+	printf("%d bytes written\n", res);
+	fflush(NULL);
+
+	return res;
+}
+
+int sendFrame(Frame f, Frame* response){
 	int res;
 	int STOP = FALSE;
+	// reset global counter
+	counter = 0;
 
-	struct sigaction action;
-	action.sa_handler = alarm_function;
-	sigemptyset(&action.sa_mask);
-	action.sa_flags = 0;
-	sigaction(SIGALRM, &action, NULL);
-
-	while (STOP==FALSE && counter < numberOfTries) {
-		// write on serial port
-		res = write(fd, msg, sizeof(char) * length);
-		printf("%d bytes written\n", res);
-		fflush(NULL);
+	while (STOP==FALSE && counter < NUMBER_OF_TRIES) {
+		
+		sendMsg(f);
 
 		alarm(3);
 		flag = 0;
 
-		// read response
-		if (readMsg(response) != ERROR){
-			// handle response
-			// is bcc valid
-			int isValidBCC  = (response[3] == (XOR(response[1], response[2])));
-
-			if (isValidBCC)
-				STOP = TRUE;
+		if (readFrame(response) != ERROR){
+			alarm(0);
+			STOP = TRUE;
 		}
   }
-	// reset global counter
-	counter = 0;
 
   if(STOP != TRUE)
 	return ERROR;
@@ -277,14 +282,51 @@ int sendMsg(char *msg, int length, char *response){
   return 0;
 }
 
+int checkFrame(Frame f) {
+	if(f.msg[3] != XOR(f.msg[1], f.msg[2])) {
+		return ERROR;
+	}
+
+	switch(f.msg[f.msg[2]]) {
+		case SET_C:
+			return SET;
+		case DISC_C:
+			return DISC;
+		case UA_C:
+			return UA;
+		case RR0_C:
+			return RR0;
+		case RR1_C:
+			return RR1;
+		case REJ0_C:
+			return REJ0;
+		case REJ1_C:
+			return REJ1;
+		case I0_C:
+			return I0;
+		case I1_C:
+			return I1;
+		default:
+			return ERROR;	
+	}
+}
+
 int llopen_Sender(){
-  char set[5] = {F , SET_A , SET_C , 0x00 , F};
-	char response[255];
+	Frame set = {
+		.msg = {F , SET_A , SET_C , SET_BCC1 , F},
+		.length = 5
+	};
 
-	int r = sendMsg(set, 5, response);
+	Frame response;
 
-	if (r != ERROR && response[2] == UA_C)
-		return 0;
+	int ret = sendFrame(set, &response);
+
+	if (ret != ERROR) {
+		int frame_type = checkFrame(response);
+		if(frame_type == UA) {
+			return 0;
+		}
+	}
 
 	return ERROR;
 }
