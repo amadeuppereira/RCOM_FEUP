@@ -135,9 +135,8 @@ int generateStartPackage(const char* filename, const size_t filesize, char** sta
   temp[i++] = START_T_FILESIZE;      //T
   temp[i++] = filesize_s;            //L
 
-  for(j = 0; j < filesize_s; j++, i++) {
-    temp[i] = (filesize >> RIGHT_SHIFT_CALC(filesize_s, j)) & 0xFF; //V
-  }
+  memcpy(temp+i, &filesize, filesize_s);
+  i = i + filesize_s;
 
   temp[i++] = START_T_FILENAME;  //T
   temp[i++] = filename_s;        //L
