@@ -531,9 +531,6 @@ int llwrite(char *buffer, int length){
 	Frame f = createFrame(buff2, finalSize);
 	free(buff2);
 
-	// envia buff3 na porta serie;
-	//printBuffer(f.msg, f.length);
-
 	Frame response;
 
 	int frame_type_send = checkFrame(f);
@@ -564,30 +561,6 @@ int llwrite(char *buffer, int length){
 		else {
 			return ERROR;
 		}
-
-	/*	int r = sendMsg(buff3, finalSize, response);
-		printf("Response Received: ");
-		printBuffer(response, 5);
-
-		if(ret != ERROR){
-			if ((f.msg[2] == I1_C && response.msg[2] == (char) RR0_C) ||
-				(f.msg[2] == I0_C && response.msg[2] == (char) RR1_C)) {
-
-				rej = 0;
-			}
-			else if ((f.msg[2] == I1_C && response.msg[2] == (char) REJ1_C) ||
-				(f.msg[2] == I0_C && response.msg[2] == (char) REJ0_C)) {
-
-				rej = 1;
-			}
-			else {
-				return ERROR;
-			}
-		}
-		else {
-			return ERROR;
-		}
-	*/
 
 	} while(rej);
 
