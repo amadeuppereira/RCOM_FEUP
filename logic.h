@@ -12,7 +12,7 @@
 #define L2 0x08
 #define XOR(a, b) a^b
 #define PACKAGE_DATA_SIZE 260
-
+ 
 #define NUMBER_OF_TRIES 3
 
 #define F 0x7e

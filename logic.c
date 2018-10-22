@@ -9,7 +9,7 @@
 #include <string.h>
 #include <strings.h>
 #include <signal.h>
-
+ 
 struct termios oldtio, newtio;
 
 int flag = 0;
@@ -21,11 +21,11 @@ int checkFrame(Frame f);
 int sendMsg(Frame f);
 
 char getCFlag(){
-	if (C_FLAG == 0x0){
+	if (C_FLAG == 0x00){
 		C_FLAG = 0x40;
 		return 0x0;
 	} else {
-		C_FLAG = 0x0;
+		C_FLAG = 0x00;
 		return 0x40;
 	}
 }
@@ -123,104 +123,186 @@ int readFrame(Frame* f){
 	return ERROR;
 }
 
-// int rejectMsg(char cflag){
-// 	// rejeitar mensagem
-// 		char c;
-// 		if (cflag == 0x40){
-// 			c = REJ1;
-// 		}
-// 		else if (cflag == 0x00){
-// 			 c = REJ0;
-// 		}
+int rejectFrame(char cflag){
+	// rejeitar mensagem
+	char c;
+	if (cflag == I1_C){
+		c = REJ1_C;
+	}
+	else if (cflag == I0_C){
+		 c = REJ0_C;
+	}
 
-// 		// rej msg bcc1
-// 		char bcc1 = XOR(UA_A, c);
-// 		char rej[5] = {F, UA_A, c, bcc1, F};
+	char* temp = malloc(sizeof(char) * 5);
+	temp[0] = F; temp[1] = I_A; temp[2] = c; temp[3] = XOR(I_A, c); temp[4] = F;
 
-// 		// write reject
-// 		int ret = write(fd, rej, 5);
-// 		printf("Send reject\n");
-// 		return ret;
-// }
+	Frame rej = {
+		.msg = temp,
+		.length = 5
+	};
 
-// int acceptMsg(char cflag){
-// 	// aceitar mensagem
-// 		char c;
-// 		if (cflag == 0x40){
-// 			c = RR1;
-// 		}
-// 		else if (cflag == 0x00){
-// 			 c = RR0;
-// 		}
+	// write reject
+	int ret = sendMsg(rej);
+	free(rej.msg);
 
-// 		// accept msg bcc1
-// 		char bcc1 = XOR(UA_A, c);
-// 		char rej[5] = {F, UA_A, c, bcc1, F};
+	printf("\nSend reject\n");
 
-// 		// write accept
-// 		int ret = write(fd, rej, 5);
-// 		printf("Send accept\n");
-// 		return ret;
-// }
+	return ret;
+}
 
-// int llread(char *buffer){
-// 	char temp[(PACKAGE_DATA_SIZE+4) *2], temp2[(PACKAGE_DATA_SIZE+4) *2], temp3[(PACKAGE_DATA_SIZE+4) *2];
-// 	int length = readMsg(temp);
+int acceptFrame(char cflag){
+	// aceitar mensagem
+	char c;
+	if (cflag == I1_C){
+		c = RR0_C;
+	}
+	else if (cflag == I0_C){
+		 c = RR1_C;
+	}
 
-// 	if (temp[2] != C_FLAG) {
-// 		// rejeitar mensagem
-// 		rejectMsg(temp[2]);
-// 		llread(buffer);
-// 		return ERROR;
-// 	}
+	char* temp = malloc(sizeof(char) * 5);
+	temp[0] = F; temp[1] = I_A; temp[2] = c; temp[3] = XOR(I_A, c); temp[4] = F;
 
-// 	// remover cabeçalho e flag inicial
-// 	int i, j;
-// 	for (i = 4, j = 0 ; i < length-1; i++, j++){
-// 		temp2[j] = temp[i];
-// 	}
-// 	length = j;
-// 	// ver valor do bcc2 se está correcto
-// 	int isValidBCC = (temp2[length-1] == (XOR(temp2[1], temp2[2])));
-// 	//printf("bcc2: 0x%x\n",temp2[length-1]);
-// 	//printf("bcc:%d\n", isValidBCC);
+	Frame rr = {
+		.msg = temp,
+		.length = 5
+	};
 
-// 	// extrair pacote de comando da trama - destuffing
-// 	length = j;
-// 	for (i = 0, j = 0; i < length - 1 ; i++, j++) {
-// 		if (temp2[i] == SETE_D && temp2[i+1] == 0x5e){
-// 			temp3[j] = SETE_E;
-// 			i++;
-// 		}
-// 		else if (temp2[i] == SETE_D && temp2[i+1] == 0x5d){
-// 			temp3[j] = SETE_D;
-// 			i++;
-// 		}
-// 		else {
-// 			temp3[j] = temp2[i];
-// 		}
-// 	}
-// 	//printBuffer(temp3, j);
+	// write accept
+	int ret = sendMsg(rr);
+	free(rr.msg);
 
-// 	length = j;
-// 	if (isValidBCC){
-// 		for (i = 0; i < length; i++){
-// 			buffer[i] = temp3[i];
-// 		}
+	printf("Send accept\n");
 
-// 		// responder mensagem com sucesso
-// 		getCFlag();
-// 		acceptMsg(temp[2]);
-// 		return i;
+	return ret;
+}
 
-// 	} else {
-// 		// rejeitar mensagem
-// 		printf("bcc");
-// 		rejectMsg(temp[2]);
-// 		llread(buffer);
-// 		return ERROR;
-// 	}
-// }
+char* destuffing(char* buf, int* size) {
+	int length = *size;
+	int new_size = 0;
+	int i, j;
+
+	for(i = 0; i < length; i++) {
+		if (buf[i] == 0x7d) {
+			i++;
+		}
+		new_size++;
+	}
+
+	char* ret = malloc(sizeof(char) * new_size);	
+
+	for (i = 0, j = 0; i < length; i++, j++) {
+		if (buf[i] == 0x7d && buf[i+1] == 0x5e){
+			ret[j] = 0x7e;
+			i++;
+		}
+		else if (buf[i] == 0x7d && buf[i+1] == 0x5d){
+			ret[j] = 0x7d;
+			i++;
+		}
+		else {
+			ret[j] = buf[i];
+		}
+	}
+
+	*size = new_size;
+	return ret;
+}
+
+char* deconstructFrame(Frame f, int* size) {
+	int new_size = f.length - 5;
+	char* ret = malloc(sizeof(char) * new_size);
+	ret = memcpy(ret, f.msg + 4, new_size);
+
+	// int i, j;
+	// for (i = 4, j = 0 ; i < f.length-1; i++, j++){
+	// 	temp2[j] = temp[i];
+	// }
+	*size = new_size;
+	return ret;
+}
+
+int checkBCC2(char* buf, int size) {
+	int i, bcc2 = buf[0];
+
+	for(i = 1; i < size - 1; i++) {
+		bcc2 = XOR(bcc2, buf[i]);
+	}
+
+	if(bcc2 == buf[size - 1]) {
+		return TRUE;
+	}
+	else {
+		return FALSE;
+	}
+}
+
+int llread(char *buffer){
+
+	Frame f;
+	//char temp[(PACKAGE_DATA_SIZE+4) *2], temp2[(PACKAGE_DATA_SIZE+4) *2], temp3[(PACKAGE_DATA_SIZE+4) *2];
+	
+	int ret = readFrame(&f);
+
+	if(ret == ERROR)
+		return ERROR;
+
+	int frame_type = checkFrame(f);
+	if(frame_type != I0 || frame_type != I1) {
+		rejectFrame(C_FLAG);
+		return 0;
+	}
+
+	if (f.msg[2] != C_FLAG) {
+		acceptFrame(C_FLAG);
+		return 0;
+	}
+
+	int size;
+
+	// remover cabeçalho e flag inicial
+	char* buf1 = deconstructFrame(f, &size);
+	free(f.msg);
+
+	// extrair pacote de comando da trama - destuffing
+	char* buf2 = destuffing(buf1, &size);
+	free(buf1);
+	
+	// ver valor do bcc2 se está correcto
+	if(checkBCC2(buf2, size)) {
+		size--;
+		buf2 = realloc(buf2, sizeof(char) * size);
+	}
+	else {
+		rejectFrame(C_FLAG);
+		return 0;
+	}
+
+	//printf("bcc2: 0x%x\n",temp2[length-1]);
+	//printf("bcc:%d\n", isValidBCC);
+	buffer = malloc(sizeof(char) * size);
+	getCFlag();
+	acceptFrame(C_FLAG);
+
+	return size;
+	
+	// if (isValidBCC){
+	// 	for (i = 0; i < length; i++){
+	// 		buffer[i] = temp3[i];
+	// 	}
+
+	// 	// responder mensagem com sucesso
+	// 	getCFlag();
+	// 	acceptMsg(temp[2]);
+	// 	return i;
+
+	// } else {
+	// 	// rejeitar mensagem
+	// 	rejectMsg(temp[2]);
+	// 	llread(buffer);
+	// 	return ERROR;
+	// }
+}
 
 int llopen_Receiver(){
 
@@ -482,7 +564,8 @@ int llwrite(char *buffer, int length){
 		else {
 			return ERROR;
 		}
-		/*int r = sendMsg(buff3, finalSize, response);
+
+	/*	int r = sendMsg(buff3, finalSize, response);
 		printf("Response Received: ");
 		printBuffer(response, 5);
 
@@ -503,7 +586,8 @@ int llwrite(char *buffer, int length){
 		}
 		else {
 			return ERROR;
-		}*/
+		}
+	*/
 
 	} while(rej);
 

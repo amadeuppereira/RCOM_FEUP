@@ -14,6 +14,7 @@
  
 int state;
 FILE *file;
+size_t sizeFile;
 
 void handleRead(char *buffer, int size);
 
@@ -53,19 +54,39 @@ int main(int argc, char** argv) {
   return 0;
 }
 
-// void handleStartPkg(char *buffer, int size){
+// int handleStartPkg(char *buffer, int size){
 //   // esta a receber pacote start, extrai informacao e abre ficheiro em disco em modo de escrita.
+//   int i;
+//   size_t L1, L2;
+//   char * nameFile;
 
-//   // TODO: extrair nome do ficheiro
+//   for (i = 0; i < size; i++){
+//     if(buffer[i] == 0x00){
+//       L1 = buffer[i+1];
+//       memcpy(buffer+(i+2), sizeFile, L1);
+//       i = i + L1 + 1;
+//     }
+//     if(buffer[i] == 0x01){
+//       L2 = buffer[i+1];
+//       i++;
+//       nameFile = malloc(L2);
+//       for( ; i < L2; i++){
+//         if(i >= size)
+//           return ERROR;
+//         nameFile[i] = buffer[i];
+//       }
+//     }
 
-//   // TODO: extrair tamanho do ficheiro
+//   }
 
-//   file = fopen("file.gif", "wb");
+//   file = fopen(nameFile, "wb");
 
 //   if (file == NULL){
 //       printf("Error opening file!\n");
 //       exit(1);
 //   }
+
+//   return 0;
 // }
 
 // void handleIPkg(char *buffer, int size){
