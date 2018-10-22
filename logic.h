@@ -9,8 +9,6 @@
 #define RECEIVER 2
 #define ERROR -1
 #define BUFFER_MAX_SIZE 255
-#define SETE_D 0x7d
-#define SETE_E 0x7e
 #define L2 0x08
 #define XOR(a, b) a^b
 #define PACKAGE_DATA_SIZE 260
@@ -50,6 +48,8 @@
 #define I1 9
 #define I1_C 0x40
 
+#define I_A 0x03
+
 typedef struct {
     char* msg;
     size_t length;
@@ -57,7 +57,7 @@ typedef struct {
 
 int setup(char *port);
 int llopen(int type);
-// int llwrite(char *buffer, int length);
+int llwrite(char *buffer, int length);
 // int llread(char *buffer);
 // int llclose();
 void copyBuffer(char *dest, char *source, int length);

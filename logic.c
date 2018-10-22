@@ -31,7 +31,7 @@ char getCFlag(){
 }
 
 void alarm_function(){
-	printf("Alarm #%d\n", counter);
+	printf("\n\tAlarm #%d\n", counter + 1);
 	flag=1;
 	counter++;
 }
@@ -243,6 +243,7 @@ int llopen_Receiver(){
 			if(frame_type == SET) {
 				sendMsg(ua);
 				free(f.msg);
+				free(ua.msg);
 				return 0;
 			}
 		}
@@ -293,23 +294,23 @@ int checkFrame(Frame f) {
 	}
 
 	switch(f.msg[2]) {
-		case SET_C:
+		case (char)SET_C:
 			return SET;
-		case DISC_C:
+		case (char)DISC_C:
 			return DISC;
-		case UA_C:
+		case (char)UA_C:
 			return UA;
-		case RR0_C:
+		case (char)RR0_C:
 			return RR0;
-		case RR1_C:
+		case (char)RR1_C:
 			return RR1;
-		case REJ0_C:
+		case (char)REJ0_C:
 			return REJ0;
-		case REJ1_C:
+		case (char)REJ1_C:
 			return REJ1;
-		case I0_C:
+		case (char)I0_C:
 			return I0;
-		case I1_C:
+		case (char)I1_C:
 			return I1;
 		default:
 			return ERROR;	
@@ -329,9 +330,12 @@ int llopen_Sender(){
 
 	int ret = sendFrame(set, &response);
 
+	free(set.msg);
+
 	if (ret != ERROR) {
 		int frame_type = checkFrame(response);
 		if(frame_type == UA) {
+			free(response.msg);
 			return 0;
 		}
 	}
@@ -352,127 +356,160 @@ int llopen(int type){
   return ERROR;
 }
 
-// void copyBuffer(char *dest, char *source, int length){
-// 	int i = 0;
-// 	for(i = 0; i < length; i++){
-// 		dest[i] = source[i];
-// 	}
-// }
+char *generateBCC2(char *buffer, int *size){
+	int length = *size;
+	char *buff1 = malloc(sizeof(char) * (length + 1));
 
-// char *generateBCC2(char *buffer, int *finalSize){
-// 	*finalSize = *finalSize+1;
+	int i;
+	int bcc2 = buffer[0];
+	for(i = 1; i < length; i++) {
+		bcc2 = XOR(buffer[i], bcc2);
 
-// 	char *buff1 = malloc(sizeof(char*) * (*finalSize));
+	}
 
-// 	// generate bcc2
-// 	char bcc2 = XOR(buffer[1], buffer[2]);
+	memcpy(buff1, buffer, length);
 
-// 	// copy from buffer to buff1
-// 	copyBuffer(buff1, buffer, *finalSize);
+	// add bcc2 to buff1
+	buff1[length] = bcc2;
 
-// 	// add bcc2 to buff1
-// 	buff1[*finalSize-1] = bcc2;
+	*size = length + 1;
 
-// 	return buff1;
-// }
+	return buff1;
+}
 
-// char *stuffing(char *buffer, int *finalSize){
-// 	int i, j, size = 0;
+char *stuffing(char *buffer, int *finalSize){
+	int length = *finalSize;
+	int i, j, new_size = 0;
 
-// 	// count number of 0x7e and 0x7d
-// 	for(i = 0; i < *finalSize; i++){
-// 		if(buffer[i] == SETE_E || buffer[i] == SETE_D){
-// 			size++;
-// 		}
-// 		size++;
-// 	}
+	// count number of 0x7e and 0x7d
+	for(i = 0; i < length; i++){
+		if(buffer[i] == 0x7e || buffer[i] == 0x7d){
+			new_size++;
+		}
+		new_size++;
+	}
 
-// 	char *buff = malloc(sizeof(char) * size);
+	char *buff = malloc(sizeof(char) * new_size);
 
-// 		for(i = 0, j= 0; i < *finalSize; i++){
-// 			if(buffer[i] == SETE_E){
-// 				buff[j] = 0x7d;
-// 				buff[j+1] = 0x5e;
-// 				j++;
-// 			}
-// 			else if (buffer[i] == SETE_D){
-// 				buff[j] = 0x7d;
-// 				buff[j+1] = 0x5d;
-// 				j++;
-// 			} else {
-// 				buff[j] = buffer[i];
-// 			}
-// 			j++;
-// 		}
+	for(i = 0, j= 0; i < length; i++){
+		if(buffer[i] == 0x7e){
+			buff[j] = 0x7d;
+			buff[j+1] = 0x5e;
+			j++;
+		}
+		else if (buffer[i] == 0x7d){
+			buff[j] = 0x7d;
+			buff[j+1] = 0x5d;
+			j++;
+		} else {
+			buff[j] = buffer[i];
+		}
+		j++;
+	}
 
-// 		*finalSize = size;
+	*finalSize = new_size;
+	return buff;
+}
 
+Frame createFrame(char *buffer, int size){
+	int length = size;
+	char *msg = malloc(length + 5);
 
-// 	return buff;
-// }
+	msg[0] = F;
+	msg[1] = I_A;
+	msg[2] = getCFlag();
 
-// char *createMsg(char *buffer, int *finalSize){
-// 	char *msg = malloc(*finalSize + 5);
+	// add bcc1
+	msg[3] = XOR(msg[1], msg[2]);
 
-// 	msg[0] = F;
-// 	msg[1] = UA_A;
-// 	msg[2] = getCFlag();
+	// copy buffer
+	memcpy(msg+4, buffer, length);
 
-// 	// add bcc1
-// 	msg[3] = XOR(msg[1], msg[2]);
+	msg[length + 4] = F;
 
-// 	// copy buffer
-// 	copyBuffer(msg + 4, buffer, *finalSize);
-// 	msg[*finalSize + 4] = F;
+	Frame frame = {
+		.msg = msg,
+		.length = length + 5
+	};
 
-// 	*finalSize = *finalSize + 5;
+	return frame;
+}
 
-// 	return msg;
-// }
+int llwrite(char *buffer, int length){
+	int finalSize = length;
 
-// int llwrite(char *buffer, int length){
-// 	int finalSize = length;
+	// calculate BCC2
+	char *buff1 = generateBCC2(buffer, &finalSize);
 
-// 	// calculate BCC2
-// 	char *buff1 = generateBCC2(buffer, &finalSize);
+	//stuffing
+	char *buff2 = stuffing(buff1, &finalSize);
+	free(buff1);
 
-// 	// stuffing
-// 	char *buff2 = stuffing(buff1, &finalSize);
-// 	free(buff1);
+	// junta cabecalho e flag final
+	Frame f = createFrame(buff2, finalSize);
+	free(buff2);
 
-// 	// junta cabecalho e flag inicial
-// 	char *buff3 = createMsg(buff2,  &finalSize);
-// 	free(buff2);
+	// envia buff3 na porta serie;
+	//printBuffer(f.msg, f.length);
 
-// 	// envia buff3 na porta serie;
-// 	//printBuffer(buff3, finalSize);
+	Frame response;
 
-// 	char response[5];
-// 	int rej = 1;
+	int frame_type_send = checkFrame(f);
 
-// 	do {
-// 		int r = sendMsg(buff3, finalSize, response);
-// 		printf("Response Received: ");
-// 		printBuffer(response, 5);
+	int rej = 1;
 
-// 		if(r == ERROR){
-// 			return ERROR;
-// 		}
+	do {
+		int ret = sendFrame(f, &response);
 
-// 		if (r != ERROR && ((buff3[2] == 0x40 && response[2] == (char)RR0) || (buff3[2] == 0x00 && response[2] == (char)RR1))){
-// 			rej = 0;
-// 			return 0;
-// 		}
-// 		else if (r != ERROR && ((buff3[2] == 0x40 && response[2] == (char)REJ1) || (buff3[2] == 0x00 && response[2] == (char)REJ0))){
-// 			rej = 1;
-// 		} else {
-// 			break;
-// 		}
-// 	} while(rej);
+		if(ret != ERROR) {
+			int frame_type_response = checkFrame(response);
 
-// 	free(buff3);
-// 	return 0;
-// }
+			if ((frame_type_send == I1 && frame_type_response == RR0) ||
+				(frame_type_send == I0 && frame_type_response == RR1)) {
+
+				rej = 0;
+			}
+			else if ((frame_type_send == I1 && frame_type_response == REJ1) ||
+				(frame_type_send == I0 && frame_type_response == REJ0)) {
+
+				rej = 1;
+			}
+			else {
+				return ERROR;
+			}
+			
+		}
+		else {
+			return ERROR;
+		}
+		/*int r = sendMsg(buff3, finalSize, response);
+		printf("Response Received: ");
+		printBuffer(response, 5);
+
+		if(ret != ERROR){
+			if ((f.msg[2] == I1_C && response.msg[2] == (char) RR0_C) ||
+				(f.msg[2] == I0_C && response.msg[2] == (char) RR1_C)) {
+
+				rej = 0;
+			}
+			else if ((f.msg[2] == I1_C && response.msg[2] == (char) REJ1_C) ||
+				(f.msg[2] == I0_C && response.msg[2] == (char) REJ0_C)) {
+
+				rej = 1;
+			}
+			else {
+				return ERROR;
+			}
+		}
+		else {
+			return ERROR;
+		}*/
+
+	} while(rej);
+
+	free(f.msg);
+	return 0;
+}
 
 int llclose(){
 	sleep(1);

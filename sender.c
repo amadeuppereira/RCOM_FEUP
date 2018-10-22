@@ -70,11 +70,11 @@ int main(int argc, char** argv){
       printf("Connection Successful\n");
   }
 
-  // //2 gerar pacote start
-  // if(sendStartPackage(argv[2], fileSize) == ERROR){
-  //   printf("Error: could not send Start package\n");
-  //   return ERROR;
-  // }
+  //2 gerar pacote start
+  if(sendStartPackage(argv[2], fileSize) == ERROR){
+    printf("Error: could not send Start package\n");
+    return ERROR;
+  }
 
   // // 3 gerar n pacotes com k dados lidos do ficheiro
   // if(sendFPackages(argv[2]) == ERROR){
@@ -107,56 +107,56 @@ size_t getFileSize(const char* filename){
 
 }
 
-// int sendStartPackage(const char* filename, size_t fileSize) {
-//     char* startPackage = NULL;
-//     int startPackageSize = generateStartPackage(filename, fileSize, &startPackage);
+int sendStartPackage(const char* filename, size_t fileSize) {
+    char* startPackage = NULL;
+    int startPackageSize = generateStartPackage(filename, fileSize, &startPackage);
 
-//     // printf("handler: %d\n", startPackageSize);
-//     //   int w;
-//     // for(w = 0; w < startPackageSize; w++) {
-//     //   printf("0x%x (%c) | ", (unsigned char)startPackage[w], (unsigned char)startPackage[w]);
-//     // }
-//     // printf("\n");
-//     // printf("Start package size: %d\n", startPackageSize);
+    // printf("handler: %d\n", startPackageSize);
+    //   int w;
+    // for(w = 0; w < startPackageSize; w++) {
+    //   printf("0x%x (%c) | ", (unsigned char)startPackage[w], (unsigned char)startPackage[w]);
+    // }
+    // printf("\n");
+    // printf("Start package size: %d\n", startPackageSize);
 
-//     int ret = llwrite(startPackage, startPackageSize);
+    int ret = llwrite(startPackage, startPackageSize);
 
-//     free(startPackage);
-//     return ret;
-// }
+    free(startPackage);
+    return ret;
+}
 
-// int generateStartPackage(const char* filename, const size_t filesize, char** start){
-//   char* temp;
-//   int i = 0, j;
-//   int startPackageSize = 1;
+int generateStartPackage(const char* filename, const size_t filesize, char** start){
+  char* temp;
+  int i = 0, j;
+  int startPackageSize = 1;
 
-//   //filesize tlv
-//   int filesize_s = sizeof(filesize);
-//   startPackageSize += 2 + filesize_s;
+  //filesize tlv
+  int filesize_s = sizeof(filesize);
+  startPackageSize += 2 + filesize_s;
 
-//   //filename tlv
-//   int filename_s = strlen(filename) * sizeof(char);
-//   startPackageSize += 2 + filename_s;
+  //filename tlv
+  int filename_s = strlen(filename) * sizeof(char);
+  startPackageSize += 2 + filename_s;
 
-//   temp = malloc(startPackageSize);
-//   temp[i++] = START_C;               //C
-//   temp[i++] = START_T_FILESIZE;      //T
-//   temp[i++] = filesize_s;            //L
+  temp = malloc(startPackageSize);
+  temp[i++] = START_C;               //C
+  temp[i++] = START_T_FILESIZE;      //T
+  temp[i++] = filesize_s;            //L
 
-//   for(j = 0; j < filesize_s; j++, i++) {
-//     temp[i] = (filesize >> RIGHT_SHIFT_CALC(filesize_s, j)) & 0xFF; //V
-//   }
+  for(j = 0; j < filesize_s; j++, i++) {
+    temp[i] = (filesize >> RIGHT_SHIFT_CALC(filesize_s, j)) & 0xFF; //V
+  }
 
-//   temp[i++] = START_T_FILENAME;  //T
-//   temp[i++] = filename_s;        //L
+  temp[i++] = START_T_FILENAME;  //T
+  temp[i++] = filename_s;        //L
 
-//   for(j = 0; j < filename_s; j++, i++) {
-//     temp[i] = *(filename + j);   //V
-//   }
+  for(j = 0; j < filename_s; j++, i++) {
+    temp[i] = *(filename + j);   //V
+  }
 
-//   *start = temp;
-//   return startPackageSize;
-// }
+  *start = temp;
+  return startPackageSize;
+}
 
 // int sendFPackages(const char* filename){
 //   FILE *file;
