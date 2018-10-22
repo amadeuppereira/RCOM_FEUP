@@ -30,7 +30,7 @@
 #define UA 3
 #define UA_C 0x07
 #define UA_A 0x03
-#define UA_BCC1 XOR(UA_A, UA_C)
+#define UA_BCC1 UA_A ^ UA_C
 
 #define RR0 4
 #define RR0_C 0x05
@@ -57,9 +57,9 @@ typedef struct {
 
 int setup(char *port);
 int llopen(int type);
-int llwrite(char *buffer, int length);
-int llread(char *buffer);
-int llclose();
+// int llwrite(char *buffer, int length);
+// int llread(char *buffer);
+// int llclose();
 void copyBuffer(char *dest, char *source, int length);
 void printBuffer(char *buff, int finalLength);
 void alarm_function();
