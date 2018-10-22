@@ -58,7 +58,7 @@ typedef struct {
 int setup(char *port);
 int llopen(int type);
 int llwrite(char *buffer, int length);
-// int llread(char *buffer);
+int llread(char **buffer);
 // int llclose();
 void copyBuffer(char *dest, char *source, int length);
 void printBuffer(char *buff, int finalLength);

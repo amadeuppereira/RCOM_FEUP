@@ -124,7 +124,6 @@ int readFrame(Frame* f){
 }
 
 int rejectFrame(char cflag){
-	// rejeitar mensagem
 	char c;
 	if (cflag == I1_C){
 		c = REJ1_C;
@@ -151,7 +150,6 @@ int rejectFrame(char cflag){
 }
 
 int acceptFrame(char cflag){
-	// aceitar mensagem
 	char c;
 	if (cflag == I1_C){
 		c = RR0_C;
@@ -214,10 +212,6 @@ char* deconstructFrame(Frame f, int* size) {
 	char* ret = malloc(sizeof(char) * new_size);
 	ret = memcpy(ret, f.msg + 4, new_size);
 
-	// int i, j;
-	// for (i = 4, j = 0 ; i < f.length-1; i++, j++){
-	// 	temp2[j] = temp[i];
-	// }
 	*size = new_size;
 	return ret;
 }
@@ -237,10 +231,9 @@ int checkBCC2(char* buf, int size) {
 	}
 }
 
-int llread(char *buffer){
+int llread(char **buffer){
 
 	Frame f;
-	//char temp[(PACKAGE_DATA_SIZE+4) *2], temp2[(PACKAGE_DATA_SIZE+4) *2], temp3[(PACKAGE_DATA_SIZE+4) *2];
 	
 	int ret = readFrame(&f);
 
@@ -248,13 +241,13 @@ int llread(char *buffer){
 		return ERROR;
 
 	int frame_type = checkFrame(f);
-	if(frame_type != I0 || frame_type != I1) {
+	if(frame_type != I0 && frame_type != I1) {
 		rejectFrame(C_FLAG);
 		return 0;
 	}
 
 	if (f.msg[2] != C_FLAG) {
-		acceptFrame(C_FLAG);
+		rejectFrame(C_FLAG);
 		return 0;
 	}
 
@@ -278,30 +271,12 @@ int llread(char *buffer){
 		return 0;
 	}
 
-	//printf("bcc2: 0x%x\n",temp2[length-1]);
-	//printf("bcc:%d\n", isValidBCC);
-	buffer = malloc(sizeof(char) * size);
-	getCFlag();
+	memcpy(*buffer, buf2, size);
 	acceptFrame(C_FLAG);
+	getCFlag();
 
+	free(buf2);
 	return size;
-	
-	// if (isValidBCC){
-	// 	for (i = 0; i < length; i++){
-	// 		buffer[i] = temp3[i];
-	// 	}
-
-	// 	// responder mensagem com sucesso
-	// 	getCFlag();
-	// 	acceptMsg(temp[2]);
-	// 	return i;
-
-	// } else {
-	// 	// rejeitar mensagem
-	// 	rejectMsg(temp[2]);
-	// 	llread(buffer);
-	// 	return ERROR;
-	// }
 }
 
 int llopen_Receiver(){
