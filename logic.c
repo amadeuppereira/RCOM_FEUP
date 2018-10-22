@@ -223,6 +223,7 @@ int readFrame(Frame* f){
 // }
 
 int llopen_Receiver(){
+
 	char* temp = malloc(sizeof(char) * 5);
 	temp[0] = F; temp[1] = UA_A; temp[2] = UA_C; temp[3] = UA_BCC1; temp[4] = F;
 
@@ -234,20 +235,19 @@ int llopen_Receiver(){
 	Frame f;
 	int ret;
 
-	read_frame:
-	ret = readFrame(&f);
+	 while(1){
+		ret = readFrame(&f);
 
-	if (ret != ERROR) {
-		int frame_type = checkFrame(f);
-		if(frame_type == SET) {
-			sendMsg(ua);
-			free(f.msg);
-			return 0;
+		if (ret != ERROR) {
+			int frame_type = checkFrame(f);
+			if(frame_type == SET) {
+				sendMsg(ua);
+				free(f.msg);
+				return 0;
+			}
 		}
-		else {
-			goto read_frame;
-		}
-	}
+	 }
+
 	
 	return ERROR;
 }
@@ -292,7 +292,7 @@ int checkFrame(Frame f) {
 		return ERROR;
 	}
 
-	switch(f.msg[f.msg[2]]) {
+	switch(f.msg[2]) {
 		case SET_C:
 			return SET;
 		case DISC_C:
