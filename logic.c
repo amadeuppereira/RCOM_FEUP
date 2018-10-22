@@ -223,7 +223,8 @@ int readFrame(Frame* f){
 // }
 
 int llopen_Receiver(){
-	char temp = {F , UA_A , UA_C , UA_BCC1 , F};
+	char* temp = malloc(sizeof(char) * 5);
+	temp[0] = F; temp[1] = UA_A; temp[2] = UA_C; temp[3] = UA_BCC1; temp[4] = F;
 
 	Frame ua = {
 		.msg = temp,
@@ -316,7 +317,8 @@ int checkFrame(Frame f) {
 }
 
 int llopen_Sender(){
-	char temp = {F , SET_A , SET_C , SET_BCC1 , F};
+	char* temp = malloc(sizeof(char) * 5);
+	temp[0] = F; temp[1] = SET_A; temp[2] = SET_C; temp[3] = SET_BCC1; temp[4] = F;
 
 	Frame set = {
 		.msg = temp,
