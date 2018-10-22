@@ -17,6 +17,9 @@ int counter = 0;
 int fd;
 char C_FLAG = 0x0;
 
+int checkFrame(Frame f);
+int sendMsg(Frame f);
+
 char getCFlag(){
 	if (C_FLAG == 0x0){
 		C_FLAG = 0x40;
@@ -220,15 +223,17 @@ int readFrame(Frame* f){
 // }
 
 int llopen_Receiver(){
+	char temp = {F , UA_A , UA_C , UA_BCC1 , F};
+
 	Frame ua = {
-		.msg = {F , UA_A , UA_C , UA_BCC1 , F},
+		.msg = temp,
 		.length = 5
 	};
 	
 	Frame f;
 	int ret;
 
-read_frame:
+	read_frame:
 	ret = readFrame(&f);
 
 	if (ret != ERROR) {
@@ -256,7 +261,6 @@ int sendMsg(Frame f) {
 }
 
 int sendFrame(Frame f, Frame* response){
-	int res;
 	int STOP = FALSE;
 	// reset global counter
 	counter = 0;
@@ -283,7 +287,7 @@ int sendFrame(Frame f, Frame* response){
 }
 
 int checkFrame(Frame f) {
-	if(f.msg[3] != XOR(f.msg[1], f.msg[2])) {
+	if(f.msg[3] != (XOR(f.msg[1], f.msg[2]))) {
 		return ERROR;
 	}
 
@@ -312,8 +316,10 @@ int checkFrame(Frame f) {
 }
 
 int llopen_Sender(){
+	char temp = {F , SET_A , SET_C , SET_BCC1 , F};
+
 	Frame set = {
-		.msg = {F , SET_A , SET_C , SET_BCC1 , F},
+		.msg = temp,
 		.length = 5
 	};
 
@@ -403,24 +409,24 @@ int llopen(int type){
 // 	return buff;
 // }
 
-char *createMsg(char *buffer, int *finalSize){
-	char *msg = malloc(*finalSize + 5);
+// char *createMsg(char *buffer, int *finalSize){
+// 	char *msg = malloc(*finalSize + 5);
 
-	msg[0] = F;
-	msg[1] = UA_A;
-	msg[2] = getCFlag();
+// 	msg[0] = F;
+// 	msg[1] = UA_A;
+// 	msg[2] = getCFlag();
 
-	// add bcc1
-	msg[3] = XOR(msg[1], msg[2]);
+// 	// add bcc1
+// 	msg[3] = XOR(msg[1], msg[2]);
 
-	// copy buffer
-	copyBuffer(msg + 4, buffer, *finalSize);
-	msg[*finalSize + 4] = F;
+// 	// copy buffer
+// 	copyBuffer(msg + 4, buffer, *finalSize);
+// 	msg[*finalSize + 4] = F;
 
-	*finalSize = *finalSize + 5;
+// 	*finalSize = *finalSize + 5;
 
-	return msg;
-}
+// 	return msg;
+// }
 
 // int llwrite(char *buffer, int length){
 // 	int finalSize = length;

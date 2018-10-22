@@ -9,7 +9,6 @@
 #define RECEIVER 2
 #define ERROR -1
 #define BUFFER_MAX_SIZE 255
-#define F 0x7e
 #define SETE_D 0x7d
 #define SETE_E 0x7e
 #define L2 0x08
@@ -17,6 +16,8 @@
 #define PACKAGE_DATA_SIZE 260
 
 #define NUMBER_OF_TRIES 3
+
+#define F 0x7e
 
 #define SET 1
 #define SET_C 0x03
