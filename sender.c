@@ -70,23 +70,23 @@ int main(int argc, char** argv){
       printf("Connection Successful\n");
   }
 
-  //2 gerar pacote start
-  if(sendStartPackage(argv[2], fileSize) == ERROR){
-    printf("Error: could not send Start package\n");
-    return ERROR;
-  }
+  // //2 gerar pacote start
+  // if(sendStartPackage(argv[2], fileSize) == ERROR){
+  //   printf("Error: could not send Start package\n");
+  //   return ERROR;
+  // }
 
-  // 3 gerar n pacotes com k dados lidos do ficheiro
-  if(sendFPackages(argv[2]) == ERROR){
-    printf("Error: could not send F packages\n");
-    return ERROR;
-  }
+  // // 3 gerar n pacotes com k dados lidos do ficheiro
+  // if(sendFPackages(argv[2]) == ERROR){
+  //   printf("Error: could not send F packages\n");
+  //   return ERROR;
+  // }
 
-  // 4 gerar pacote start
-  if(sendEndPackage(argv[2], fileSize) == ERROR){
-    printf("Error: could not send End package\n");
-    return ERROR;
-  }
+  // // 4 gerar pacote start
+  // if(sendEndPackage(argv[2], fileSize) == ERROR){
+  //   printf("Error: could not send End package\n");
+  //   return ERROR;
+  // }
 
   return 0;
 }

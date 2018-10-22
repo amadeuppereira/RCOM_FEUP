@@ -38,15 +38,15 @@ int main(int argc, char** argv) {
     printf("Connection Successful\n");
   }
 
-  int readResult;
+  // int readResult;
 
-  do {
-    char buffer[PACKAGE_DATA_SIZE+4];
-    readResult = llread(buffer);
+  // do {
+  //   char buffer[PACKAGE_DATA_SIZE+4];
+  //   readResult = llread(buffer);
 
-    handleRead(buffer, readResult);
+  //   handleRead(buffer, readResult);
 
-  } while(readResult > 0);
+  // } while(readResult > 0);
 
 
 
