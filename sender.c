@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <signal.h>
+
 
 #define PACKAGE_DATA_SIZE 260
 #define START_C 0x02
