@@ -6,7 +6,7 @@
 #include <signal.h>
 
 
-#define PACKAGE_DATA_SIZE 1000
+#define PACKAGE_DATA_SIZE 1024
 #define START_C 0x02
 #define START_T_FILESIZE 0x00
 #define START_T_FILENAME 0x01
@@ -138,7 +138,7 @@ int generateStartPackage(const char* filename, const size_t filesize, char** sta
   int filename_s = strlen(filename) * sizeof(char);
   startPackageSize += 2 + filename_s;
 
-  temp = malloc(startPackageSize);file siz
+  temp = malloc(startPackageSize);
   temp[i++] = START_C;               //C
   temp[i++] = START_T_FILESIZE;      //T
   temp[i++] = filesize_s;            //L
