@@ -566,7 +566,7 @@ int llclose(){
   }
 
 
-	sleep(1);
+	//sleep(1);
 	if ( tcsetattr(fd,TCSANOW,&oldtio) == ERROR) {
     perror("tcsetattr");
     return ERROR;
@@ -589,27 +589,17 @@ int llclose_Receiver() {
 
   Frame f;
   int ret;
+	sendMsg(disc);
+	free(disc.msg);
 
   ret = readFrame(&f);
-
-  if (ret != ERROR) {
+  if(ret != ERROR) {
     int frame_type = checkFrame(f);
-    if(frame_type == DISC && f.msg[1] == A1) {
-      sendMsg(disc);
+    if(frame_type == UA && f.msg[1] == A2) {
       free(f.msg);
-      free(disc.msg);
-
-      ret = readFrame(&f);
-      if(ret != ERROR) {
-        int frame_type = checkFrame(f);
-        if(frame_type == UA && f.msg[1] == A2) {
-          free(f.msg);
-          return 0;
-        }
-      }
+      return 0;
     }
   }
-
 
   return ERROR;
 }

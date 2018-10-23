@@ -47,14 +47,14 @@ int main(int argc, char** argv) {
 
     if(readResult > 0)
       handleRead(buffer, readResult);
-
-  } while(readResult != 2);
+      
+  } while(readResult != -2);
 
   if(llclose() == ERROR){
     printf("Error: could not disconnect!\n");
     exit(-1);
   }
-  
+
   printf("Receiver ended with success\n");
   return 0;
 }
