@@ -6,7 +6,7 @@
 #include <signal.h>
 
 
-#define PACKAGE_DATA_SIZE 16
+#define PACKAGE_DATA_SIZE 9000
 #define START_C 0x02
 #define START_T_FILESIZE 0x00
 #define START_T_FILENAME 0x01

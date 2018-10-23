@@ -545,7 +545,7 @@ int llwrite(char *buffer, int length){
 			}
 			else {
         printf("return eroro 1\n");
-				return ERROR;
+				rej =0;
 			}
 
 		}
