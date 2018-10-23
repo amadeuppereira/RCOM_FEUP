@@ -47,7 +47,9 @@ int main(int argc, char** argv) {
 
     if(readResult > 0)
       handleRead(buffer, readResult);
-      
+
+    free(buffer);
+
   } while(readResult != -2);
 
   if(llclose() == ERROR){
@@ -88,8 +90,8 @@ int handleStartPkg(char *buffer, int size){
   }
 
   //Opens file
-  file = fopen(nameFile, "wb");
-  free(nameFile);
+   file = fopen(nameFile, "wb");
+   free(nameFile);
   if (file == NULL){
       printf("Error opening file!\n");
       exit(1);

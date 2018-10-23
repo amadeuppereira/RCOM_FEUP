@@ -279,11 +279,12 @@ int llread(char **buffer){
 		return 0;
 	}
 
-	memcpy(*buffer, buf2, size);
+	*buffer = buf2;
+
 	acceptFrame(C_FLAG);
+
 	getCFlag();
 
-	free(buf2);
 	return size;
 }
 
