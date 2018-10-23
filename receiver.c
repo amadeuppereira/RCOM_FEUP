@@ -123,6 +123,14 @@ void handleEndPkg(char *buffer, int size){
   fclose(file);
 }
 
+void handleClose(){
+  shouldStop = llclose();
+  if(shouldStop == ERROR){
+    printf("Error: Could not disconnect serial port.\n");
+    exit(1);
+  }
+}
+
 void handleRead(char *buffer, int size){
 
   //lidar com o c2 do pacote de comando
@@ -139,7 +147,7 @@ void handleRead(char *buffer, int size){
       handleEndPkg(buffer, size);
     break;
     case (char) DISC_C:
-      shouldStop = llclose();
+      handleClose();
     break;
     default:
     break;
