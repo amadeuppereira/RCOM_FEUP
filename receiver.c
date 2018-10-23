@@ -15,7 +15,6 @@
 int state;
 FILE *file;
 size_t sizeFile;
-int shouldStop = -100;
 
 void handleRead(char *buffer, int size);
 
@@ -46,11 +45,16 @@ int main(int argc, char** argv) {
     char * buffer;
     readResult = llread(&buffer);
 
-    if(readResult != 0)
+    if(readResult > 0)
       handleRead(buffer, readResult);
 
-  } while(shouldStop < 0);
+  } while(readResult != 2);
 
+  if(llclose() == ERROR){
+    printf("Error: could not disconnect!\n");
+    exit(-1);
+  }
+  
   printf("Receiver ended with success\n");
   return 0;
 }
@@ -123,14 +127,6 @@ void handleEndPkg(char *buffer, int size){
   fclose(file);
 }
 
-void handleClose(){
-  shouldStop = llclose();
-  if(shouldStop == ERROR){
-    printf("Error: Could not disconnect serial port.\n");
-    exit(1);
-  }
-}
-
 void handleRead(char *buffer, int size){
 
   //lidar com o c2 do pacote de comando
@@ -145,9 +141,6 @@ void handleRead(char *buffer, int size){
     break;
     case 0x03:
       handleEndPkg(buffer, size);
-    break;
-    case (char) DISC_C:
-      handleClose();
     break;
     default:
     break;
