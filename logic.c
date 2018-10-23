@@ -9,16 +9,19 @@
 #include <string.h>
 #include <strings.h>
 #include <signal.h>
- 
+
 struct termios oldtio, newtio;
 
 int flag = 0;
 int counter = 0;
 int fd;
 char C_FLAG = 0x0;
+int program;
 
 int checkFrame(Frame f);
 int sendMsg(Frame f);
+int llclose_Receiver();
+int llclose_Sender();
 
 char getCFlag(){
 	if (C_FLAG == 0x00){
@@ -133,7 +136,7 @@ int rejectFrame(char cflag){
 	}
 
 	char* temp = malloc(sizeof(char) * 5);
-	temp[0] = F; temp[1] = I_A; temp[2] = c; temp[3] = XOR(I_A, c); temp[4] = F;
+	temp[0] = F; temp[1] = A1; temp[2] = c; temp[3] = XOR(A1, c); temp[4] = F;
 
 	Frame rej = {
 		.msg = temp,
@@ -159,7 +162,7 @@ int acceptFrame(char cflag){
 	}
 
 	char* temp = malloc(sizeof(char) * 5);
-	temp[0] = F; temp[1] = I_A; temp[2] = c; temp[3] = XOR(I_A, c); temp[4] = F;
+	temp[0] = F; temp[1] = A1; temp[2] = c; temp[3] = XOR(A1, c); temp[4] = F;
 
 	Frame rr = {
 		.msg = temp,
@@ -187,7 +190,7 @@ char* destuffing(char* buf, int* size) {
 		new_size++;
 	}
 
-	char* ret = malloc(sizeof(char) * new_size);	
+	char* ret = malloc(sizeof(char) * new_size);
 
 	for (i = 0, j = 0; i < length; i++, j++) {
 		if (buf[i] == 0x7d && buf[i+1] == 0x5e){
@@ -234,7 +237,7 @@ int checkBCC2(char* buf, int size) {
 int llread(char **buffer){
 
 	Frame f;
-	
+
 	int ret = readFrame(&f);
 
 	if(ret == ERROR)
@@ -260,7 +263,7 @@ int llread(char **buffer){
 	// extrair pacote de comando da trama - destuffing
 	char* buf2 = destuffing(buf1, &size);
 	free(buf1);
-	
+
 	// ver valor do bcc2 se está correcto
 	if(checkBCC2(buf2, size)) {
 		size--;
@@ -282,13 +285,13 @@ int llread(char **buffer){
 int llopen_Receiver(){
 
 	char* temp = malloc(sizeof(char) * 5);
-	temp[0] = F; temp[1] = UA_A; temp[2] = UA_C; temp[3] = UA_BCC1; temp[4] = F;
+	temp[0] = F; temp[1] = A1; temp[2] = UA_C; temp[3] = UA_BCC1; temp[4] = F;
 
 	Frame ua = {
 		.msg = temp,
 		.length = 5
 	};
-	
+
 	Frame f;
 	int ret;
 
@@ -297,7 +300,7 @@ int llopen_Receiver(){
 
 		if (ret != ERROR) {
 			int frame_type = checkFrame(f);
-			if(frame_type == SET) {
+			if(frame_type == SET  && f.msg[1] == A1) {
 				sendMsg(ua);
 				free(f.msg);
 				free(ua.msg);
@@ -306,7 +309,7 @@ int llopen_Receiver(){
 		}
 	 }
 
-	
+
 	return ERROR;
 }
 
@@ -325,7 +328,7 @@ int sendFrame(Frame f, Frame* response){
 	counter = 0;
 
 	while (STOP==FALSE && counter < NUMBER_OF_TRIES) {
-		
+
 		sendMsg(f);
 
 		alarm(3);
@@ -370,13 +373,13 @@ int checkFrame(Frame f) {
 		case (char)I1_C:
 			return I1;
 		default:
-			return ERROR;	
+			return ERROR;
 	}
 }
 
 int llopen_Sender(){
 	char* temp = malloc(sizeof(char) * 5);
-	temp[0] = F; temp[1] = SET_A; temp[2] = SET_C; temp[3] = SET_BCC1; temp[4] = F;
+	temp[0] = F; temp[1] = A1; temp[2] = SET_C; temp[3] = SET_BCC1; temp[4] = F;
 
 	Frame set = {
 		.msg = temp,
@@ -391,7 +394,7 @@ int llopen_Sender(){
 
 	if (ret != ERROR) {
 		int frame_type = checkFrame(response);
-		if(frame_type == UA) {
+		if(frame_type == UA  && f.msg[1] == A1) {
 			free(response.msg);
 			return 0;
 		}
@@ -401,6 +404,8 @@ int llopen_Sender(){
 }
 
 int llopen(int type){
+  program = type;
+
   if(type == TRANSMITTER)
   {
     return llopen_Sender();
@@ -473,7 +478,7 @@ Frame createFrame(char *buffer, int size){
 	char *msg = malloc(length + 5);
 
 	msg[0] = F;
-	msg[1] = I_A;
+	msg[1] = A1;
 	msg[2] = getCFlag();
 
 	// add bcc1
@@ -531,7 +536,7 @@ int llwrite(char *buffer, int length){
 			else {
 				return ERROR;
 			}
-			
+
 		}
 		else {
 			return ERROR;
@@ -544,10 +549,97 @@ int llwrite(char *buffer, int length){
 }
 
 int llclose(){
+  int ret;
+
+  if(program == TRANSMITTER)
+  {
+    ret = llclose_Sender();
+  }
+  else if (program == RECEIVER)
+  {
+    ret = llclose_Receiver();
+  }
+
+
 	sleep(1);
 	if ( tcsetattr(fd,TCSANOW,&oldtio) == ERROR) {
     perror("tcsetattr");
     return ERROR;
   }
-	return close(fd);
+
+	if(close(fd) < 0 || ret < 0) {
+    return ERROR;
+  }
+  return 0;
+}
+
+int llclose_Receiver() {
+  char* temp = malloc(sizeof(char) * 5);
+  temp[0] = F; temp[1] = A2; temp[2] = DISC_C; temp[3] = XOR(A2, DISC_C); temp[4] = F;
+
+  Frame disc = {
+    .msg = temp,
+    .length = 5
+  };
+
+  Frame f;
+  int ret;
+
+  ret = readFrame(&f);
+
+  if (ret != ERROR) {
+    int frame_type = checkFrame(f);
+    if(frame_type == DISC && f.msg[1] == A1) {
+      sendMsg(disc);
+      free(f.msg);
+      free(disc.msg);
+
+      ret = readFrame(&f);
+      if(ret != ERROR) {
+        int frame_type = checkFrame(f);
+        if(frame_type == UA && f.msg[1] == A2) {
+          free(f.msg);
+          return 0;
+        }
+      }
+    }
+  }
+
+
+  return ERROR;
+}
+
+int llclose_Sender() {
+  char* temp = malloc(sizeof(char) * 5);
+  temp[0] = F; temp[1] = A1; temp[2] = DISC_C; temp[3] = XOR(A1, DISC_C); temp[4] = F;
+
+  Frame disc = {
+    .msg = temp,
+    .length = 5
+  };
+
+  Frame response;
+  int ret = sendFrame(disc, &response);
+  free(disc.msg);
+
+  if(ret != ERROR) {
+    int frame_type = checkFrame(response);
+    if(frame_type == DISC && response.msg[1] == A2) {
+      free(response.msg);
+
+      //creating ua frame
+      char* temp1 = malloc(sizeof(char) * 5);
+      temp1[0] = F; temp1[1] = A2; temp1[2] = UA_C; temp1[3] = XOR(A2, UA_C); temp1[4] = F;
+
+      Frame ua = {
+        .msg = temp1,
+        .length = 5
+      };
+
+      ret = sendFrame(ua, &response);
+      if(ret == ERROR) return ERROR;
+      return 0;
+    }
+  }
+  return ERROR;
 }

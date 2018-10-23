@@ -6,7 +6,7 @@
 #include <signal.h>
 
 
-#define PACKAGE_DATA_SIZE 260
+#define PACKAGE_DATA_SIZE 2000
 #define START_C 0x02
 #define START_T_FILESIZE 0x00
 #define START_T_FILENAME 0x01
@@ -85,6 +85,11 @@ int main(int argc, char** argv){
   // 4 gerar pacote start
   if(sendEndPackage(argv[2], fileSize) == ERROR){
     printf("Error: could not send End package\n");
+    return ERROR;
+  }
+
+  if(llclose() == ERROR) {
+    printf("Error: could not disconnect\n");
     return ERROR;
   }
 
@@ -191,12 +196,13 @@ int sendFPackages(const char* filename){
     //   return ERROR;
     // }
     int ret;
-    do{
+  //  do{
       ret = llwrite(fPackage, j+4);
-    }while(ret == ERROR);
+  //  }while(ret == ERROR);
+    free(fPackage);
+    if(ret == ERROR) return ERROR;
 
     counter++;
-    free(fPackage);
   }
 
   fclose(file);
@@ -210,8 +216,8 @@ int generateFPackages(char * filedata, char ** fPackage, int packageCounter, int
   temp = malloc(size_package + 4);
   temp[i++] = PACKAGE_C;
   temp[i++] = packageCounter;
-  temp[i++] = size_package / PACKAGE_DATA_SIZE;
-  temp[i++] = size_package % PACKAGE_DATA_SIZE;
+  temp[i++] = size_package / 256;
+  temp[i++] = size_package % 256;
 
   for(j = 0; j < size_package; j++, i++) {
     temp[i] = filedata[j];
@@ -252,9 +258,6 @@ int generateEndPackage(const char* filename, const size_t filesize, char** end){
   temp[i++] = END_T_FILESIZE;      //T
   temp[i++] = filesize_s;            //L
 
-  for(j = 0; j < filesize_s; j++, i++) {
-    temp[i] = (filesize >> RIGHT_SHIFT_CALC(filesize_s, j)) & 0xFF; //V
-  }
   memcpy(temp+i, &filesize, filesize_s);
   i = i + filesize_s;
 
