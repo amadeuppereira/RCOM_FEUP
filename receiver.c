@@ -112,7 +112,7 @@ void handleIPkg(char *buffer, int size){
   }
 
   //printBuffer(temp, length);
-  printf("Package %d received\n", buffer[1]);
+  printf("Package %d received\n", (unsigned char)buffer[1]);
   write(fileno(file), temp, length);
 }
 
