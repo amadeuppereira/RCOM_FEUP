@@ -244,6 +244,11 @@ int llread(char **buffer){
 		return ERROR;
 
 	int frame_type = checkFrame(f);
+
+  if(frame_type == DISC && f.msg[1] == A1) {
+    return -2;
+  }
+
 	if(frame_type != I0 && frame_type != I1) {
 		rejectFrame(C_FLAG);
 		return 0;
@@ -394,7 +399,7 @@ int llopen_Sender(){
 
 	if (ret != ERROR) {
 		int frame_type = checkFrame(response);
-		if(frame_type == UA  && f.msg[1] == A1) {
+		if(frame_type == UA  && response.msg[1] == A1) {
 			free(response.msg);
 			return 0;
 		}

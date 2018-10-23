@@ -187,7 +187,7 @@ int sendFPackages(const char* filename){
       }
       str[j] = buffer[i];
     }
-    printBuffer(str, j);
+    //printBuffer(str, j);
 
     generateFPackages(str, &fPackage, counter, j);
 
