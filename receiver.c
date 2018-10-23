@@ -41,14 +41,15 @@ int main(int argc, char** argv) {
 
   int readResult;
 
+  char * buffer;
   do {
-    char * buffer;
     readResult = llread(&buffer);
 
-    if(readResult > 0)
+    if(readResult > 0) {
       handleRead(buffer, readResult);
+      free(buffer);
 
-    free(buffer);
+    }
 
   } while(readResult != -2);
 
