@@ -322,8 +322,6 @@ int llopen_Receiver(){
 int sendMsg(Frame f) {
 	// write on serial port
 	int res = write(fd, f.msg, sizeof(char) * f.length);
-	printf("%d bytes written\n", res);
-	fflush(NULL);
 
 	return res;
 }
@@ -524,33 +522,26 @@ int llwrite(char *buffer, int length){
 	int rej = 1;
 
 	do {
-    printf("antes: 0x%x\n", C_FLAG);
-		int ret = sendFrame(f, &response);
-    printf("depois: 0x%x\n", C_FLAG);
+		int ret = sendFrame(f, &response);;
 
 		if(ret != ERROR) {
 			int frame_type_response = checkFrame(response);
 
 			if ((frame_type_send == I1 && frame_type_response == RR0) ||
 				(frame_type_send == I0 && frame_type_response == RR1)) {
-          printf("I1/RR0 ou I0/RR1\n");
-
 				rej = 0;
 			}
 			else if ((frame_type_send == I1 && frame_type_response == REJ1) ||
 				(frame_type_send == I0 && frame_type_response == REJ0)) {
-          printf("I1/REJ1 ou I0/REJ0\n");
-
 				rej = 1;
 			}
 			else {
-        printf("return eroro 1\n");
-				rej =0;
+				rej = 0;
 			}
 
 		}
 		else {
-      printf("return eroro 2\n");
+      printf("Error on response\n");
 			return ERROR;
 		}
 
@@ -574,7 +565,6 @@ int llclose(){
   }
 
 
-	// sleep(1);
 	if ( tcsetattr(fd,TCSANOW,&oldtio) == ERROR) {
     perror("tcsetattr");
     return ERROR;
@@ -623,14 +613,11 @@ int llclose_Sender() {
 
   Frame response;
   int ret = sendFrame(disc, &response);
-  printf("Send disc\n");
   free(disc.msg);
 
   if(ret != ERROR) {
     int frame_type = checkFrame(response);
     if(frame_type == DISC && response.msg[1] == A2) {
-      printf("Received disc\n");
-
       free(response.msg);
 
       //creating ua frame
@@ -643,7 +630,6 @@ int llclose_Sender() {
       };
 
       ret = sendMsg(ua);
-      printf("Send ua\n");
 
       return 0;
     }

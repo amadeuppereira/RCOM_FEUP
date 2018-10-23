@@ -6,7 +6,7 @@
 #include <signal.h>
 
 
-#define PACKAGE_DATA_SIZE 9000
+#define PACKAGE_DATA_SIZE 1000
 #define START_C 0x02
 #define START_T_FILESIZE 0x00
 #define START_T_FILENAME 0x01
@@ -53,7 +53,7 @@ int main(int argc, char** argv){
     exit(-1);
   }
   else {
-    printf("\n\tfile: %s (0x%lx bytes)\n\n", argv[2], fileSize);
+    printf("\n\tFile: %s (0x%lx bytes)\n\n", argv[2], fileSize);
   }
 
   // setup serial port
@@ -138,7 +138,7 @@ int generateStartPackage(const char* filename, const size_t filesize, char** sta
   int filename_s = strlen(filename) * sizeof(char);
   startPackageSize += 2 + filename_s;
 
-  temp = malloc(startPackageSize);
+  temp = malloc(startPackageSize);file siz
   temp[i++] = START_C;               //C
   temp[i++] = START_T_FILESIZE;      //T
   temp[i++] = filesize_s;            //L
@@ -171,7 +171,7 @@ int sendFPackages(const char* filename){
   fseek(file,0,SEEK_END);
   filelength = ftell(file);
   rewind(file);
-  printf("file size: %ld\n", filelength);
+  printf("File size: %ld bytes\n", filelength);
   char * buffer;
   buffer = (char*) malloc((filelength+1)*sizeof(char));
   fread(buffer, filelength, 1, file);
@@ -187,18 +187,12 @@ int sendFPackages(const char* filename){
       }
       str[j] = buffer[i];
     }
-    //printBuffer(str, j);
 
     generateFPackages(str, &fPackage, counter, j);
 
-    // if(llwrite(fPackage, j+4) == ERROR){
-    //   free(fPackage);
-    //   return ERROR;
-    // }
     int ret;
-  //  do{
-      ret = llwrite(fPackage, j+4);
-  //  }while(ret == ERROR);
+    printf("Sending package %d\n", fPackage[1]);
+    ret = llwrite(fPackage, j+4);
     free(fPackage);
     if(ret == ERROR) return ERROR;
 
