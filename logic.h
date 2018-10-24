@@ -1,6 +1,7 @@
 
 #include <stddef.h>
 
+#define PACKAGE_DATA_SIZE 1024
 #define BAUDRATE B38400
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
@@ -52,6 +53,23 @@ typedef struct {
     size_t length;
 } Frame;
 
+typedef struct {
+    char *port; /*Dispositivo /dev/ttySx, x = 0, 1*/
+    int baudRate; /*Velocidade de transmissão*/
+    unsigned int timeout; /*Valor do temporizador: 1 s*/
+    unsigned int numTransmissions; /*Número de tentativas em caso defalha*/
+} LinkLayer;
+
+typedef struct {
+    size_t sent;
+    size_t received;
+    size_t time_outs;
+    size_t sentRR;
+    size_t receivedRR;
+    size_t sentREJ;
+    size_t receivedREJ;
+} Statistics;
+
 int setup(char *port);
 int llopen(int type);
 int llwrite(char *buffer, int length);
@@ -61,3 +79,4 @@ void copyBuffer(char *dest, char *source, int length);
 void printBuffer(char *buff, int finalLength);
 void alarm_function();
 void printProgressBar(int sizeReceived, int fileSize, size_t packageNumber);
+void connectionStatistics();

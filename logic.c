@@ -11,6 +11,8 @@
 #include <signal.h>
 
 struct termios oldtio, newtio;
+LinkLayer linkLayer;
+Statistics statistics;
 
 int flag = 0;
 int counter = 0;
@@ -22,6 +24,7 @@ int checkFrame(Frame f);
 int sendMsg(Frame f);
 int llclose_Receiver();
 int llclose_Sender();
+void connectionInfo();
 
 char getCFlag(){
 	if (C_FLAG == 0x00){
@@ -34,17 +37,33 @@ char getCFlag(){
 }
 
 void alarm_function(){
-	if(counter == 0)
-		printf("\n\tAlarm #%d\n", counter + 1);
-	else
-		printf("\tAlarm #%d\n", counter + 1);
+	statistics.time_outs++;
 	flag=1;
 	counter++;
 }
 
+void createStructLinkLayer(char *port){
+	linkLayer.baudRate = BAUDRATE;
+	linkLayer.numTransmissions = NUMBER_OF_TRIES;
+	linkLayer.port = port;
+	linkLayer.timeout = 3;
+}
+
+void initializeStatistics(){
+	statistics.sent = 0;
+	statistics.received = 0;
+	statistics.time_outs = 0;
+	statistics.sentRR = 0;
+	statistics.receivedRR = 0;
+	statistics.sentREJ = 0;
+	statistics.receivedREJ = 0;
+}
+
 int setup(char *port) {
-  fd = open(port, O_RDWR | O_NOCTTY );
-  if (fd <0) {perror(port); return ERROR; }
+  createStructLinkLayer(port);
+  initializeStatistics();
+  fd = open(linkLayer.port, O_RDWR | O_NOCTTY );
+  if (fd <0) {perror(linkLayer.port); return ERROR; }
 
   if ( tcgetattr(fd,&oldtio) == ERROR) { /* save current port settings */
     perror("tcgetattr");
@@ -52,7 +71,7 @@ int setup(char *port) {
   }
 
   bzero(&newtio, sizeof(newtio));
-  newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
+  newtio.c_cflag = linkLayer.baudRate | CS8 | CLOCAL | CREAD;
   newtio.c_iflag = IGNPAR;
   newtio.c_oflag = 0;
 
@@ -69,6 +88,7 @@ int setup(char *port) {
     return ERROR;
   }
 
+  connectionInfo();
   printf("*** New termios structure set ***\n");
   return fd;
 }
@@ -153,7 +173,7 @@ int rejectFrame(char cflag){
 	int ret = sendMsg(rej);
 	free(rej.msg);
 
-	//printf("\nSend reject\n");
+	statistics.sentREJ++;
 
 	return ret;
 }
@@ -182,7 +202,7 @@ int acceptFrame(char cflag){
 	int ret = sendMsg(rr);
 	free(rr.msg);
 
-	//printf("Send accept\n");
+	statistics.sentRR++;
 
 	return ret;
 }
@@ -251,6 +271,8 @@ int llread(char **buffer){
 
 	if(ret == ERROR)
 		return ERROR;
+
+	statistics.received++;
 
 	int frame_type = checkFrame(f);
 
@@ -339,9 +361,9 @@ int sendFrame(Frame f, Frame* response){
 	// reset global counter
 	counter = 0;
 
-	while (STOP==FALSE && counter < NUMBER_OF_TRIES) {
+	while (STOP==FALSE && counter < linkLayer.numTransmissions) {
 		sendMsg(f);
-		alarm(3);
+		alarm(linkLayer.timeout);
 		flag = 0;
 		if (readFrame(response) != ERROR){
 			alarm(0);
@@ -413,10 +435,10 @@ int llopen_Sender(){
 int llopen(int type){
   program = type;
 
-  if(type == TRANSMITTER){
+  if(program == TRANSMITTER){
     return llopen_Sender();
   }
-  else if (type == RECEIVER){
+  else if (program == RECEIVER){
     return llopen_Receiver();
   }
 
@@ -524,7 +546,14 @@ int llwrite(char *buffer, int length){
 	do {
 		int ret = sendFrame(f, &response);;
 		if(ret != ERROR) {
+			statistics.sent++;
 			int frame_type_response = checkFrame(response);
+
+			if((frame_type_response == RR0) || (frame_type_response == RR1))
+				statistics.receivedRR++;
+			if((frame_type_response == REJ0) || (frame_type_response == REJ1))
+				statistics.receivedREJ++;
+
 			if ((frame_type_send == I1 && frame_type_response == RR0) ||
 				(frame_type_send == I0 && frame_type_response == RR1)) {
 				rej = 0;
@@ -649,4 +678,37 @@ void printProgressBar(int sizeReceived, int fileSize, size_t packageNumber){
 	if(m==100)
 		printf("\n\n");
 	fflush(stdout);
+}
+
+void connectionInfo(){
+	char *mode;
+	if(program == TRANSMITTER){
+    	mode = "Transmitter";
+	}
+  	else{
+    	mode = "Receiver";
+  	}
+	printf("**************** CONNECTION INFO ****************\n");
+	printf(" - Mode: %s\n", mode);
+	printf(" - Port: %s\n", linkLayer.port);
+	printf(" - Baud rate: %d\n", linkLayer.baudRate);
+	printf(" - Package Data Size: %d\n", PACKAGE_DATA_SIZE);
+	printf(" - Number of tries: %d\n", linkLayer.numTransmissions);
+	printf(" - Time-out interval: %d\n", linkLayer.timeout);
+	printf("*************************************************\n");
+	printf("\n");
+}
+
+void connectionStatistics(){
+	printf("\n");
+	printf("************* CONNECTION STATISTICS *************\n");
+	printf(" - Messages Sent: %ld\n", statistics.sent);
+	printf(" - Messages Received: %ld\n", statistics.received);
+	printf(" - Time-outs: %ld\n", statistics.time_outs);
+	printf(" - RR Sent: %ld\n", statistics.sentRR);
+	printf(" - RR Received: %ld\n", statistics.receivedRR);
+	printf(" - REJ Sent: %ld\n", statistics.sentREJ);
+	printf(" - REJ Received: %ld\n", statistics.receivedREJ);
+	printf("*************************************************\n");
+	printf("\n");
 }

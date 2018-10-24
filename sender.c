@@ -5,8 +5,6 @@
 #include <sys/stat.h>
 #include <signal.h>
 
-
-#define PACKAGE_DATA_SIZE 1024
 #define START_C 0x02
 #define START_T_FILESIZE 0x00
 #define START_T_FILENAME 0x01
@@ -97,6 +95,8 @@ int main(int argc, char** argv){
   }
 
   printf("File sent with success\n");
+
+  connectionStatistics();
   return 0;
 }
 

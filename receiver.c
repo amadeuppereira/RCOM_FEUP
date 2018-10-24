@@ -60,6 +60,8 @@ int main(int argc, char** argv) {
   }
 
   printf("File received with success\n");
+
+  connectionStatistics();
   return 0;
 }
 
