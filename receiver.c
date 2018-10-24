@@ -14,7 +14,7 @@
 
 int state;
 FILE *file;
-size_t sizeFile;
+size_t fileSize;
 int sizeReceived = 0;
 
 void handleRead(char *buffer, int size);
@@ -71,7 +71,7 @@ int handleStartPkg(char *buffer, int size){
     //reads file size
     if(buffer[i] == 0x00){
       l1 = buffer[i+1];
-      memcpy(&sizeFile, buffer+i+2, l1);
+      memcpy(&fileSize, buffer+i+2, l1);
       i = i + l1 + 2;
     }
     //reads file name
@@ -97,7 +97,7 @@ int handleStartPkg(char *buffer, int size){
       exit(1);
   }
 
-  printf("Receiving a file named %s with %ld bytes\n", nameFile, sizeFile);
+  printf("Receiving a file named %s with %ld bytes\n", nameFile, fileSize);
   free(nameFile);
   return 0;
 }
@@ -121,7 +121,7 @@ void handleIPkg(char *buffer, int size){
 
   sizeReceived += length;
 
-  printProgressBar(sizeReceived, sizeFile, (unsigned char)buffer[1]);
+  printProgressBar(sizeReceived, fileSize, (unsigned char)buffer[1]);
 
   write(fileno(file), temp, length);
 }

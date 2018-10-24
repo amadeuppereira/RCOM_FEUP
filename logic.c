@@ -34,7 +34,10 @@ char getCFlag(){
 }
 
 void alarm_function(){
-	printf("\n\tAlarm #%d\n", counter + 1);
+	if(counter == 0)
+		printf("\n\tAlarm #%d\n", counter + 1);
+	else
+		printf("\tAlarm #%d\n", counter + 1);
 	flag=1;
 	counter++;
 }
@@ -245,9 +248,9 @@ int llread(char **buffer){
 
 	int frame_type = checkFrame(f);
 
-  if(frame_type == DISC && f.msg[1] == A1) {
-    return -2;
-  }
+  	if(frame_type == DISC && f.msg[1] == A1) {
+    	return -2;
+  	}
 
 	if(frame_type != I0 && frame_type != I1) {
 		rejectFrame(C_FLAG);
@@ -301,7 +304,7 @@ int llopen_Receiver(){
 	Frame f;
 	int ret;
 
-	 while(1){
+	while(1){
 		ret = readFrame(&f);
 
 		if (ret != ERROR) {
@@ -315,29 +318,25 @@ int llopen_Receiver(){
 		}
 	 }
 
-
 	return ERROR;
 }
 
 int sendMsg(Frame f) {
 	// write on serial port
 	int res = write(fd, f.msg, sizeof(char) * f.length);
-
 	return res;
 }
 
 int sendFrame(Frame f, Frame* response){
 	int STOP = FALSE;
+
 	// reset global counter
 	counter = 0;
 
 	while (STOP==FALSE && counter < NUMBER_OF_TRIES) {
-
 		sendMsg(f);
-
 		alarm(3);
 		flag = 0;
-
 		if (readFrame(response) != ERROR){
 			alarm(0);
 			STOP = TRUE;
@@ -346,8 +345,6 @@ int sendFrame(Frame f, Frame* response){
 
   if(STOP != TRUE)
 	return ERROR;
-
-  //sleep(1);
 
   return 0;
 }
@@ -410,12 +407,10 @@ int llopen_Sender(){
 int llopen(int type){
   program = type;
 
-  if(type == TRANSMITTER)
-  {
+  if(type == TRANSMITTER){
     return llopen_Sender();
   }
-  else if (type == RECEIVER)
-  {
+  else if (type == RECEIVER){
     return llopen_Receiver();
   }
 
@@ -518,15 +513,12 @@ int llwrite(char *buffer, int length){
 	Frame response;
 
 	int frame_type_send = checkFrame(f);
-
 	int rej = 1;
 
 	do {
 		int ret = sendFrame(f, &response);;
-
 		if(ret != ERROR) {
 			int frame_type_response = checkFrame(response);
-
 			if ((frame_type_send == I1 && frame_type_response == RR0) ||
 				(frame_type_send == I0 && frame_type_response == RR1)) {
 				rej = 0;
@@ -538,13 +530,10 @@ int llwrite(char *buffer, int length){
 			else {
 				rej = 0;
 			}
-
 		}
 		else {
-      printf("Error on response\n");
 			return ERROR;
 		}
-
 	} while(rej);
 
 	free(f.msg);
@@ -554,23 +543,19 @@ int llwrite(char *buffer, int length){
 int llclose(){
   int ret;
 
-  if(program == TRANSMITTER)
-  {
-
+  if(program == TRANSMITTER){
     ret = llclose_Sender();
   }
-  else if (program == RECEIVER)
-  {
+  else if (program == RECEIVER){
     ret = llclose_Receiver();
   }
 
-
-	if ( tcsetattr(fd,TCSANOW,&oldtio) == ERROR) {
+  if ( tcsetattr(fd,TCSANOW,&oldtio) == ERROR) {
     perror("tcsetattr");
     return ERROR;
   }
 
-	if(close(fd) < 0 || ret < 0) {
+  if(close(fd) < 0 || ret < 0) {
     return ERROR;
   }
   return 0;
