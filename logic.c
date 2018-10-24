@@ -137,6 +137,9 @@ int rejectFrame(char cflag){
 	else if (cflag == I0_C){
 		 c = REJ0_C;
 	}
+	else{
+		return ERROR;
+	}
 
 	char* temp = malloc(sizeof(char) * 5);
 	temp[0] = F; temp[1] = A1; temp[2] = c; temp[3] = XOR(A1, c); temp[4] = F;
@@ -162,6 +165,9 @@ int acceptFrame(char cflag){
 	}
 	else if (cflag == I0_C){
 		 c = RR1_C;
+	}
+	else{
+		return ERROR;
 	}
 
 	char* temp = malloc(sizeof(char) * 5);
