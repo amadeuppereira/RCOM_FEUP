@@ -73,24 +73,24 @@ int main(int argc, char** argv){
 
   //2 gerar pacote start
   if(sendStartPackage(argv[2], fileSize) == ERROR){
-    printf("Error: could not send Start package\n");
+    printf("\nError: could not send Start package\n");
     return ERROR;
   }
 
   // 3 gerar n pacotes com k dados lidos do ficheiro
   if(sendFPackages(argv[2]) == ERROR){
-    printf("Error: could not send F packages\n");
+    printf("\nError: could not send F packages\n");
     return ERROR;
   }
 
   // 4 gerar pacote start
   if(sendEndPackage(argv[2], fileSize) == ERROR){
-    printf("Error: could not send End package\n");
+    printf("\nError: could not send End package\n");
     return ERROR;
   }
 
   if(llclose() == ERROR) {
-    printf("Error: could not disconnect\n");
+    printf("\nError: could not disconnect\n");
     return ERROR;
   }
   else{
