@@ -15,6 +15,7 @@
 int state;
 FILE *file;
 size_t sizeFile;
+int sizeReceived = 0;
 
 void handleRead(char *buffer, int size);
 
@@ -50,7 +51,7 @@ int main(int argc, char** argv) {
       free(buffer);
 
     }
-
+    //printf("readResult: %d\n", readResult);
   } while(readResult != -2);
 
   if(llclose() == ERROR){
@@ -118,8 +119,11 @@ void handleIPkg(char *buffer, int size){
     temp[i] = buffer[i+4];
   }
 
+  sizeReceived += length;
+
   //printBuffer(temp, length);
-  printf("Package %d received\n", (unsigned char)buffer[1]);
+  printf("\r\rPackage %d received\n", (unsigned char)buffer[1]);
+  printProgressBar(sizeReceived, sizeFile);
   write(fileno(file), temp, length);
 }
 

@@ -60,3 +60,4 @@ int llclose();
 void copyBuffer(char *dest, char *source, int length);
 void printBuffer(char *buff, int finalLength);
 void alarm_function();
+void printProgressBar(int sizeReceived, int fileSize);

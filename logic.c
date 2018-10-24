@@ -147,7 +147,7 @@ int rejectFrame(char cflag){
 	int ret = sendMsg(rej);
 	free(rej.msg);
 
-	printf("\nSend reject\n");
+	//printf("\nSend reject\n");
 
 	return ret;
 }
@@ -173,7 +173,7 @@ int acceptFrame(char cflag){
 	int ret = sendMsg(rr);
 	free(rr.msg);
 
-	printf("Send accept\n");
+	//printf("Send accept\n");
 
 	return ret;
 }
@@ -635,4 +635,26 @@ int llclose_Sender() {
     }
   }
   return ERROR;
+}
+
+void printProgressBar(int sizeReceived, int fileSize){
+	int j, n, m;
+    m = sizeReceived*100/fileSize;
+    printf("\r[");
+    n = m*50/100;
+    if(n>=49){
+        m=100;
+    }
+    for(j = 0; j < 50; j++){
+        if(n >= 0){
+            printf("#");
+            n--;
+        }
+        else{
+            printf(" ");
+        }
+    }
+    printf("] %d%%", m);
+    fflush(stdout);
+    printf("\n");
 }
