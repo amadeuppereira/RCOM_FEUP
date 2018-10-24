@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
     exit(-1);
   }
   else {
-    printf("Connection Successful\n\n");
+    printf("*** Connection Successful ***\n\n");
   }
 
   int readResult;
@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
     exit(-1);
   }
 
-  printf("Receiver ended with success\n");
+  printf("File received with success\n");
   return 0;
 }
 

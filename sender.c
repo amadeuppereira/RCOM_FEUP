@@ -70,7 +70,7 @@ int main(int argc, char** argv){
     exit(-1);
   }
   else {
-      printf("Connection Successful\n\n");
+      printf("*** Connection Successful ***\n\n");
   }
 
   //2 gerar pacote start
@@ -96,7 +96,7 @@ int main(int argc, char** argv){
     return ERROR;
   }
 
-  printf("Sender ended with success\n");
+  printf("File sent with success\n");
   return 0;
 }
 
