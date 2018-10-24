@@ -16,8 +16,6 @@
 #define END_T_FILENAME 0x01
 #define RIGHT_SHIFT_CALC(size, index) 8*(size - index - 1)
 
-int fd;
-
 size_t getFileSize(const char* filename);
 int sendStartPackage(const char* filename, size_t fileSize);
 int generateStartPackage(const char* filename, size_t fileSize, char** startPackage);
@@ -25,6 +23,10 @@ int sendFPackages(const char* filename);
 int generateFPackages(char * filedata, char ** fPackage, int packageCounter, int size_package);
 int sendEndPackage(const char* filename, size_t fileSize);
 int generateEndPackage(const char* filename, size_t fileSize, char** endPackage);
+
+int fd;
+size_t fileSize;
+int sizeSend = 0;
 
 int main(int argc, char** argv){
 
@@ -43,7 +45,7 @@ int main(int argc, char** argv){
 	sigaction(SIGALRM, &action, NULL);
 
   // 1 ler dados do ficheiro
-  size_t fileSize = getFileSize(argv[2]);
+  fileSize = getFileSize(argv[2]);
   if(fileSize == -1) {
     printf("Error: could not get file size\n");
     exit(-1);
@@ -53,7 +55,7 @@ int main(int argc, char** argv){
     exit(-1);
   }
   else {
-    printf("\n\tFile: %s (0x%lx bytes)\n\n", argv[2], fileSize);
+    printf("\n\tFile: %s (%ld bytes)\n\n", argv[2], fileSize);
   }
 
   // setup serial port
@@ -67,7 +69,7 @@ int main(int argc, char** argv){
     exit(-1);
   }
   else {
-      printf("Connection Successful\n");
+      printf("Connection Successful\n\n");
   }
 
   //2 gerar pacote start
@@ -93,23 +95,19 @@ int main(int argc, char** argv){
     return ERROR;
   }
 
+  printf("Sender ended with success\n");
   return 0;
 }
 
 size_t getFileSize(const char* filename){
-
   struct stat fileStat;
-
   if (stat(filename, &fileStat) < 0 ){
     return -1;
   }
-
   if (!S_ISREG(fileStat.st_mode)) {
     return -2;
   }
-
   return fileStat.st_size;
-
 }
 
 int sendStartPackage(const char* filename, size_t fileSize) {
@@ -167,21 +165,16 @@ int sendFPackages(const char* filename){
   if(file == NULL)
     return ERROR;
 
-  long filelength;
-  fseek(file,0,SEEK_END);
-  filelength = ftell(file);
-  rewind(file);
-  printf("File size: %ld bytes\n", filelength);
   char * buffer;
-  buffer = (char*) malloc((filelength+1)*sizeof(char));
-  fread(buffer, filelength, 1, file);
+  buffer = (char*) malloc((fileSize+1)*sizeof(char));
+  fread(buffer, fileSize, 1, file);
 
   int i = 0, j;
   int STOP = FALSE;
 
   while(STOP == FALSE){
     for(j = 0; j < PACKAGE_DATA_SIZE; j++, i++){
-      if(i == filelength){
+      if(i == fileSize){
         STOP = TRUE;
         break;
       }
@@ -190,8 +183,11 @@ int sendFPackages(const char* filename){
 
     generateFPackages(str, &fPackage, counter, j);
 
+    sizeSend += j;
+ 
+    printProgressBar(sizeSend, fileSize, fPackage[1]);
+
     int ret;
-    printf("Sending package %d\n", fPackage[1]);
     ret = llwrite(fPackage, j+4);
     free(fPackage);
     if(ret == ERROR) return ERROR;
