@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     exit(-1);
   }
   else {
-    printf("Connection Successful\n");
+    printf("Connection Successful\n\n");
   }
 
   int readResult;
@@ -49,9 +49,8 @@ int main(int argc, char** argv) {
     if(readResult > 0) {
       handleRead(buffer, readResult);
       free(buffer);
-
     }
-    //printf("readResult: %d\n", readResult);
+
   } while(readResult != -2);
 
   if(llclose() == ERROR){
@@ -67,7 +66,6 @@ int handleStartPkg(char *buffer, int size){
   int i, j;
   size_t l1, l2;
   char * nameFile;
-  printBuffer(buffer, size);
 
   for (i = 1; i < size; i++){
     //reads file size
@@ -92,13 +90,15 @@ int handleStartPkg(char *buffer, int size){
   }
 
   //Opens file
-   file = fopen(nameFile, "wb");
-   free(nameFile);
+  file = fopen(nameFile, "wb");
+   
   if (file == NULL){
       printf("Error opening file!\n");
       exit(1);
   }
 
+  printf("Receiving a file named %s with %ld bytes\n", nameFile, sizeFile);
+  free(nameFile);
   return 0;
 }
 
@@ -121,17 +121,16 @@ void handleIPkg(char *buffer, int size){
 
   sizeReceived += length;
 
-  //printBuffer(temp, length);
-  printf("\r\rPackage %d received\n", (unsigned char)buffer[1]);
-  printProgressBar(sizeReceived, sizeFile);
+  printProgressBar(sizeReceived, sizeFile, (unsigned char)buffer[1]);
+
   write(fileno(file), temp, length);
 }
 
 void handleEndPkg(char *buffer, int size){
   // percebe que e o pacote end e termina.
-  printf("Finished writing, closing file!\n");
-
   fclose(file);
+
+  printf("Finished writing and file closed\n");
 }
 
 void handleRead(char *buffer, int size){
