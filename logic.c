@@ -627,7 +627,7 @@ void printProgressBar(int sizeReceived, int fileSize, size_t packageNumber){
     m = sizeReceived*100/fileSize;
 	printf("\r[");
     n = m*50/100;
-    if(n>=49){
+    if(sizeReceived >= fileSize){
         m=100;
     }
     for(j = 0; j < 50; j++){
