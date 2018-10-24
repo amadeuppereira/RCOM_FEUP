@@ -58,6 +58,9 @@ int main(int argc, char** argv) {
     printf("Error: could not disconnect!\n");
     exit(-1);
   }
+  else{
+    printf("*** Disconnection Successful ***\n\n");
+  }
 
   printf("File received with success\n");
 
