@@ -15,6 +15,7 @@
 int state;
 FILE *file;
 size_t fileSize;
+size_t packageCounter = 0;
 int sizeReceived = 0;
 
 void handleRead(char *buffer, int size);
@@ -120,8 +121,9 @@ void handleIPkg(char *buffer, int size){
   }
 
   sizeReceived += length;
+  packageCounter++;
 
-  printProgressBar(sizeReceived, fileSize, (unsigned char)buffer[1]);
+  printProgressBar(sizeReceived, fileSize, packageCounter);
 
   write(fileno(file), temp, length);
 }

@@ -622,7 +622,7 @@ int llclose_Sender() {
   return ERROR;
 }
 
-void printProgressBar(int sizeReceived, int fileSize, int packageNumber){
+void printProgressBar(int sizeReceived, int fileSize, size_t packageNumber){
 	int j, n, m;
     m = sizeReceived*100/fileSize;
 	printf("\r[");
@@ -639,7 +639,7 @@ void printProgressBar(int sizeReceived, int fileSize, int packageNumber){
             printf(" ");
         }
     }
-    printf("] %d%% - Package number: %d", m, packageNumber);
+    printf("] %d%% - Package number: %ld", m, packageNumber);
 	if(m==100)
 		printf("\n\n");
 	fflush(stdout);

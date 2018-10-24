@@ -26,6 +26,7 @@ int generateEndPackage(const char* filename, size_t fileSize, char** endPackage)
 
 int fd;
 size_t fileSize;
+size_t packageCounter = 0;
 int sizeSend = 0;
 
 int main(int argc, char** argv){
@@ -184,8 +185,9 @@ int sendFPackages(const char* filename){
     generateFPackages(str, &fPackage, counter, j);
 
     sizeSend += j;
- 
-    printProgressBar(sizeSend, fileSize, fPackage[1]);
+    packageCounter++;
+
+    printProgressBar(sizeSend, fileSize, packageCounter);
 
     int ret;
     ret = llwrite(fPackage, j+4);
