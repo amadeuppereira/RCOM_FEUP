@@ -54,7 +54,7 @@ int main(int argc, char** argv){
     exit(-1);
   }
   else {
-    printf("\n\tFile: %s (%ld bytes)\n\n", argv[2], fileSize);
+    printf("\nFile: %s (%ld bytes)\n", argv[2], fileSize);
   }
 
   // setup serial port

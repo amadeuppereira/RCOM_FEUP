@@ -133,8 +133,6 @@ void handleIPkg(char *buffer, int size){
 void handleEndPkg(char *buffer, int size){
   // percebe que e o pacote end e termina.
   fclose(file);
-
-  printf("Finished writing and file closed\n");
 }
 
 void handleRead(char *buffer, int size){

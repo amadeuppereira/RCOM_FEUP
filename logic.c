@@ -272,13 +272,13 @@ int llread(char **buffer){
 	if(ret == ERROR)
 		return ERROR;
 
-	statistics.received++;
-
 	int frame_type = checkFrame(f);
 
   	if(frame_type == DISC && f.msg[1] == A1) {
     	return -2;
   	}
+
+	statistics.received++;
 
 	if(frame_type != I0 && frame_type != I1) {
 		rejectFrame(C_FLAG);
@@ -688,6 +688,7 @@ void connectionInfo(){
   	else{
     	mode = "Receiver";
   	}
+	printf("\n");
 	printf("**************** CONNECTION INFO ****************\n");
 	printf(" - Mode: %s\n", mode);
 	printf(" - Port: %s\n", linkLayer.port);
