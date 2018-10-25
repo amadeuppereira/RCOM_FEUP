@@ -367,8 +367,8 @@ int sendFrame(Frame f, Frame* response){
 	counter = 0;
 
 	while (STOP==FALSE && counter < linkLayer.numTransmissions) {
-		sendMsg(f);
 		gettimeofday(&timerStart, NULL);
+		sendMsg(f);
 		alarm(linkLayer.timeout);
 		flag = 0;
 		if (readFrame(response) != ERROR){
