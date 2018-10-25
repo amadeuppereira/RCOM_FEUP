@@ -68,6 +68,9 @@ typedef struct {
     size_t receivedRR;
     size_t sentREJ;
     size_t receivedREJ;
+
+    size_t framesTotalTime;
+    size_t framesCounter;
 } Statistics;
 
 int setup(char *port);

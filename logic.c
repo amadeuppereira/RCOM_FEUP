@@ -9,10 +9,13 @@
 #include <string.h>
 #include <strings.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/time.h>
 
 struct termios oldtio, newtio;
 LinkLayer linkLayer;
 Statistics statistics;
+struct timeval timerStart, timerEnd;
 
 int flag = 0;
 int counter = 0;
@@ -57,6 +60,8 @@ void initializeStatistics(){
 	statistics.receivedRR = 0;
 	statistics.sentREJ = 0;
 	statistics.receivedREJ = 0;
+	statistics.framesTotalTime = 0;
+	statistics.framesCounter = 0;
 }
 
 int setup(char *port) {
@@ -363,10 +368,15 @@ int sendFrame(Frame f, Frame* response){
 
 	while (STOP==FALSE && counter < linkLayer.numTransmissions) {
 		sendMsg(f);
+		gettimeofday(&timerStart, NULL);
 		alarm(linkLayer.timeout);
 		flag = 0;
 		if (readFrame(response) != ERROR){
 			alarm(0);
+			gettimeofday(&timerEnd, NULL);
+			statistics.framesTotalTime += (timerEnd.tv_sec - timerStart.tv_sec)*1000.0f +
+																		(timerEnd.tv_usec - timerStart.tv_usec)/1000.0f;
+			statistics.framesCounter++;
 			STOP = TRUE;
 		}
   }
@@ -544,7 +554,7 @@ int llwrite(char *buffer, int length){
 	int rej = 1;
 
 	do {
-		int ret = sendFrame(f, &response);;
+		int ret = sendFrame(f, &response);
 		if(ret != ERROR) {
 			statistics.sent++;
 			int frame_type_response = checkFrame(response);
@@ -710,6 +720,8 @@ void connectionStatistics(){
 	printf(" - RR Received: %ld\n", statistics.receivedRR);
 	printf(" - REJ Sent: %ld\n", statistics.sentREJ);
 	printf(" - REJ Received: %ld\n", statistics.receivedREJ);
+	if(program == TRANSMITTER)
+		printf(" - Average Frame Time: %ld ms\n", statistics.framesTotalTime / statistics.framesCounter);
 	printf("*************************************************\n");
 	printf("\n");
 }
