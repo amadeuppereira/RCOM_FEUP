@@ -5,11 +5,11 @@
 #include <termios.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 #include <string.h>
 #include <strings.h>
 #include <signal.h>
-#include <sys/types.h>
 #include <sys/time.h>
 
 struct termios oldtio, newtio;
@@ -268,6 +268,36 @@ int checkBCC2(char* buf, int size) {
 	}
 }
 
+void simulateErrors(Frame* f) {
+	srand((unsigned int) time(NULL));
+
+	int i;
+	float r;
+	//Insert error in data
+	for(i = 4; i < f->length-2; i++) {
+		r = rand() / ((float) RAND_MAX);
+		r *= 100;
+		if(r < ERROR_PROBABILITY_DATA) {
+			f->msg[i] = ~(f->msg[i]);
+		}
+	}
+
+	//Insert error in frame headers
+	for(i = 1; i < 4; i++) {
+		r = rand() / ((float) RAND_MAX);
+		r *= 100;
+		if(r < ERROR_PROBABILITY_HEADER) {
+			f->msg[i] = ~(f->msg[i]);
+		}
+	}
+
+	r = rand() / ((float) RAND_MAX);
+	r *= 100;
+	if(r < ERROR_PROBABILITY_HEADER) {
+		f->msg[f->length-2] = ~(f->msg[f->length-2]);
+	}
+
+}
 int llread(char **buffer){
 
 	Frame f;
@@ -277,11 +307,13 @@ int llread(char **buffer){
 	if(ret == ERROR)
 		return ERROR;
 
+	//simulateErrors(&f);
+
 	int frame_type = checkFrame(f);
 
-  	if(frame_type == DISC && f.msg[1] == A1) {
-    	return -2;
-  	}
+	if(frame_type == DISC && f.msg[1] == A1) {
+		return -2;
+	}
 
 	statistics.received++;
 
@@ -367,16 +399,11 @@ int sendFrame(Frame f, Frame* response){
 	counter = 0;
 
 	while (STOP==FALSE && counter < linkLayer.numTransmissions) {
-		gettimeofday(&timerStart, NULL);
 		sendMsg(f);
 		alarm(linkLayer.timeout);
 		flag = 0;
 		if (readFrame(response) != ERROR){
 			alarm(0);
-			gettimeofday(&timerEnd, NULL);
-			statistics.framesTotalTime += (timerEnd.tv_sec - timerStart.tv_sec)*1000.0f +
-																		(timerEnd.tv_usec - timerStart.tv_usec)/1000.0f;
-			statistics.framesCounter++;
 			STOP = TRUE;
 		}
   }
@@ -553,7 +580,9 @@ int llwrite(char *buffer, int length){
 	int frame_type_send = checkFrame(f);
 	int rej = 1;
 
+	gettimeofday(&timerStart, NULL);
 	do {
+
 		int ret = sendFrame(f, &response);
 		if(ret != ERROR) {
 			statistics.sent++;
@@ -580,6 +609,12 @@ int llwrite(char *buffer, int length){
 			return ERROR;
 		}
 	} while(rej);
+
+	gettimeofday(&timerEnd, NULL);
+	statistics.framesTotalTime += (timerEnd.tv_sec - timerStart.tv_sec)*1000.0f +
+																(timerEnd.tv_usec - timerStart.tv_usec)/1000.0f;
+	statistics.framesCounter++;
+
 
 	free(f.msg);
 	return 0;

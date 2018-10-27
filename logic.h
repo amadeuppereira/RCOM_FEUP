@@ -12,6 +12,8 @@
 #define BUFFER_MAX_SIZE 255
 #define L2 0x08
 #define XOR(a, b) a^b
+#define ERROR_PROBABILITY_DATA 0
+#define ERROR_PROBABILITY_HEADER 0
 
 #define NUMBER_OF_TRIES 3
 
