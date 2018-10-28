@@ -1,4 +1,3 @@
-
 #include <stddef.h>
 
 #define PACKAGE_DATA_SIZE 1024
@@ -12,8 +11,8 @@
 #define BUFFER_MAX_SIZE 255
 #define L2 0x08
 #define XOR(a, b) a^b
-#define ERROR_PROBABILITY_DATA 0
-#define ERROR_PROBABILITY_HEADER 0
+#define ERROR_PROBABILITY_DATA 50     //percentage
+#define ERROR_PROBABILITY_HEADER 50   //percentage
 
 #define NUMBER_OF_TRIES 3
 
@@ -73,6 +72,8 @@ typedef struct {
 
     size_t framesTotalTime;
     size_t framesCounter;
+    float errorProbability_data;
+    float errorProbability_header;
 } Statistics;
 
 int setup(char *port);

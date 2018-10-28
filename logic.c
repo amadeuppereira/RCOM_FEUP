@@ -62,6 +62,8 @@ void initializeStatistics(){
 	statistics.receivedREJ = 0;
 	statistics.framesTotalTime = 0;
 	statistics.framesCounter = 0;
+	statistics.errorProbability_data = (float)ERROR_PROBABILITY_DATA;
+	statistics.errorProbability_header = (float)ERROR_PROBABILITY_HEADER;
 }
 
 int setup(char *port) {
@@ -227,17 +229,32 @@ char* destuffing(char* buf, int* size) {
 	char* ret = malloc(sizeof(char) * new_size);
 
 	for (i = 0, j = 0; i < length; i++, j++) {
-		if (buf[i] == 0x7d && buf[i+1] == 0x5e){
-			ret[j] = 0x7e;
-			i++;
-		}
-		else if (buf[i] == 0x7d && buf[i+1] == 0x5d){
-			ret[j] = 0x7d;
-			i++;
+		if(buf[i] == 0x7d) {
+			if(buf[i+1] == 0x5e) {
+				ret[j] = 0x7e;
+				i++;
+			}
+			else if(buf[i+1] == 0x5d) {
+				ret[j] = 0x7d;
+				i++;
+			}
+			else
+				return NULL;
 		}
 		else {
 			ret[j] = buf[i];
 		}
+		// if (buf[i] == 0x7d && buf[i+1] == 0x5e){
+		// 	ret[j] = 0x7e;
+		// 	i++;
+		// }
+		// else if (buf[i] == 0x7d && buf[i+1] == 0x5d){
+		// 	ret[j] = 0x7d;
+		// 	i++;
+		// }
+		// else {
+		// 	ret[j] = buf[i];
+		// }
 	}
 
 	*size = new_size;
@@ -269,35 +286,33 @@ int checkBCC2(char* buf, int size) {
 }
 
 void simulateErrors(Frame* f) {
+	size_t length = f->length;
+
 	srand((unsigned int) time(NULL));
 
-	int i;
-	float r;
+	float r = rand() / ((float) RAND_MAX);
+	r *= 100;
 	//Insert error in data
-	for(i = 4; i < f->length-2; i++) {
-		r = rand() / ((float) RAND_MAX);
-		r *= 100;
-		if(r < ERROR_PROBABILITY_DATA) {
-			f->msg[i] = ~(f->msg[i]);
-		}
+	if(r < statistics.errorProbability_data) {
+		int index = rand() % (length - 6);
+		index += 4;
+		// f->msg[index] = 0x00;
+		f->msg[index] = rand();
 	}
 
 	//Insert error in frame headers
-	for(i = 1; i < 4; i++) {
-		r = rand() / ((float) RAND_MAX);
-		r *= 100;
-		if(r < ERROR_PROBABILITY_HEADER) {
-			f->msg[i] = ~(f->msg[i]);
-		}
-	}
-
 	r = rand() / ((float) RAND_MAX);
 	r *= 100;
-	if(r < ERROR_PROBABILITY_HEADER) {
-		f->msg[f->length-2] = ~(f->msg[f->length-2]);
-	}
+	if(r < statistics.errorProbability_header) {
+		int index = rand() % 4;
+		index += 1;
+		if(index == 4) index = length - 2;
+		// f->msg[index] = 0x00;
+		f->msg[index] = rand();
 
+	}
 }
+
 int llread(char **buffer){
 
 	Frame f;
@@ -307,7 +322,9 @@ int llread(char **buffer){
 	if(ret == ERROR)
 		return ERROR;
 
-	//simulateErrors(&f);
+	if((f.msg[2] == I0_C || f.msg[2] == I1_C) && f.msg[4] == 0x01) {
+		simulateErrors(&f);
+	}
 
 	int frame_type = checkFrame(f);
 
@@ -316,27 +333,26 @@ int llread(char **buffer){
 	}
 
 	statistics.received++;
-
 	if(frame_type != I0 && frame_type != I1) {
 		rejectFrame(C_FLAG);
 		return 0;
 	}
-
 	if (f.msg[2] != C_FLAG) {
 		rejectFrame(C_FLAG);
 		return 0;
 	}
 
 	int size;
-
 	// remover cabeçalho e flag inicial
 	char* buf1 = deconstructFrame(f, &size);
 	free(f.msg);
-
 	// extrair pacote de comando da trama - destuffing
 	char* buf2 = destuffing(buf1, &size);
 	free(buf1);
-
+	if(buf2 == NULL) {
+		rejectFrame(C_FLAG);
+		return 0;
+	}
 	// ver valor do bcc2 se está correcto
 	if(checkBCC2(buf2, size)) {
 		size--;
@@ -347,8 +363,16 @@ int llread(char **buffer){
 		return 0;
 	}
 
-	*buffer = buf2;
+	//check data L1 and L2 with actual size
+	if(buf2[0] == 0x01) {
+		size_t data_size = 256 * (unsigned char) buf2[2] + (unsigned char) buf2[3];
+		if(data_size != size - 4) {
+			rejectFrame(C_FLAG);
+			return 0;
+		}
+	}
 
+	*buffer = buf2;
 	acceptFrame(C_FLAG);
 
 	getCFlag();
@@ -757,6 +781,10 @@ void connectionStatistics(){
 	printf(" - REJ Received: %ld\n", statistics.receivedREJ);
 	if(program == TRANSMITTER)
 		printf(" - Average Frame Time: %ld ms\n", statistics.framesTotalTime / statistics.framesCounter);
+	if(program == RECEIVER) {
+		printf(" - Error Probability (data): %.2f %% \n", statistics.errorProbability_data);
+		printf(" - Error Probability (header): %.2f %% \n", statistics.errorProbability_header);
+	}
 	printf("*************************************************\n");
 	printf("\n");
 }
