@@ -328,6 +328,10 @@ int llread(char **buffer){
 
 	int frame_type = checkFrame(f);
 
+	if(frame_type == ERROR) {
+		return 0;
+	}
+
 	if(frame_type == DISC && f.msg[1] == A1) {
 		return -2;
 	}
@@ -616,7 +620,7 @@ int llwrite(char *buffer, int length){
 				statistics.receivedRR++;
 			if((frame_type_response == REJ0) || (frame_type_response == REJ1))
 				statistics.receivedREJ++;
-				
+
 			if(frame_type_response != ERROR){
 				if ((frame_type_send == I1 && frame_type_response == RR0) ||
 					(frame_type_send == I0 && frame_type_response == RR1)) {

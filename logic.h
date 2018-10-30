@@ -12,7 +12,7 @@
 #define L2 0x08
 #define XOR(a, b) a^b
 #define ERROR_PROBABILITY_DATA 50     //percentage
-#define ERROR_PROBABILITY_HEADER 50   //percentage
+#define ERROR_PROBABILITY_HEADER 30   //percentage
 
 #define NUMBER_OF_TRIES 3
 
