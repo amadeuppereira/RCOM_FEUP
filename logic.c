@@ -616,17 +616,22 @@ int llwrite(char *buffer, int length){
 				statistics.receivedRR++;
 			if((frame_type_response == REJ0) || (frame_type_response == REJ1))
 				statistics.receivedREJ++;
-
-			if ((frame_type_send == I1 && frame_type_response == RR0) ||
-				(frame_type_send == I0 && frame_type_response == RR1)) {
-				rej = 0;
+				
+			if(frame_type_response != ERROR){
+				if ((frame_type_send == I1 && frame_type_response == RR0) ||
+					(frame_type_send == I0 && frame_type_response == RR1)) {
+					rej = 0;
+				}
+				else if ((frame_type_send == I1 && frame_type_response == REJ1) ||
+					(frame_type_send == I0 && frame_type_response == REJ0)) {
+					rej = 1;
+				}
+				else {
+					rej = 0;
+				}
 			}
-			else if ((frame_type_send == I1 && frame_type_response == REJ1) ||
-				(frame_type_send == I0 && frame_type_response == REJ0)) {
+			else{
 				rej = 1;
-			}
-			else {
-				rej = 0;
 			}
 		}
 		else {
