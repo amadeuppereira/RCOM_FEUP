@@ -97,7 +97,7 @@ int handleStartPkg(char *buffer, int size){
 
   //Opens file
   file = fopen(nameFile, "wb");
-   
+
   if (file == NULL){
       printf("Error opening file!\n");
       exit(1);
@@ -110,9 +110,9 @@ int handleStartPkg(char *buffer, int size){
 
 void handleIPkg(char *buffer, int size){
 
-  int N = packageCounter%255;
-  if(buffer[1] != N){
-    printf("Erro no N");
+  size_t N = packageCounter%255;
+  if((unsigned char) buffer[1] != N){
+    printf("Error: received frame with invalid number\n");
     exit(ERROR);
   }
 
