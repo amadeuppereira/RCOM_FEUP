@@ -210,7 +210,7 @@ int generateFPackages(char * filedata, char ** fPackage, int packageCounter, int
 
   temp = malloc(size_package + 4);
   temp[i++] = PACKAGE_C;
-  temp[i++] = packageCounter;
+  temp[i++] = packageCounter % 255;
   temp[i++] = size_package / 256;
   temp[i++] = size_package % 256;
 

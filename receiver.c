@@ -110,6 +110,12 @@ int handleStartPkg(char *buffer, int size){
 
 void handleIPkg(char *buffer, int size){
 
+  int N = packageCounter%255;
+  if(buffer[1] != N){
+    printf("Erro no N");
+    exit(ERROR);
+  }
+
   // parse L1  e L2
   size_t length = 256 * (unsigned char) buffer[2] + (unsigned char) buffer[3];
 
@@ -126,8 +132,8 @@ void handleIPkg(char *buffer, int size){
   }
 
   sizeReceived += length;
-  packageCounter++;
 
+  packageCounter++;
   printProgressBar(sizeReceived, fileSize, packageCounter);
 
   write(fileno(file), temp, length);
