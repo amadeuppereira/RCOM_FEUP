@@ -1,3 +1,5 @@
+// Logic -- Data Link Layer
+
 #include <stddef.h>
 
 #define PACKAGE_DATA_SIZE 1024
@@ -55,10 +57,10 @@ typedef struct {
 } Frame;
 
 typedef struct {
-    char *port; /*Dispositivo /dev/ttySx, x = 0, 1*/
-    int baudRate; /*Velocidade de transmissão*/
-    unsigned int timeout; /*Valor do temporizador: 1 s*/
-    unsigned int numTransmissions; /*Número de tentativas em caso defalha*/
+    char *port;                     /*Dispositivo /dev/ttySx, x = 0, 1*/
+    int baudRate;                   /*Velocidade de transmissão*/
+    unsigned int timeout;           /*Valor do temporizador: 1 s*/
+    unsigned int numTransmissions;  /*Número de tentativas em caso defalha*/
 } LinkLayer;
 
 typedef struct {
@@ -82,7 +84,6 @@ int llwrite(char *buffer, int length);
 int llread(char **buffer);
 int llclose();
 void copyBuffer(char *dest, char *source, int length);
-void printBuffer(char *buff, int finalLength);
 void alarm_function();
 void printProgressBar(int sizeReceived, int fileSize, size_t packageNumber);
 void connectionStatistics();

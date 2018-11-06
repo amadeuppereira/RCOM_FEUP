@@ -1,4 +1,4 @@
-//receiver -- application layer
+// Receiver -- Application Layer
 
 #include "logic.h"
 #include <stdio.h>
@@ -140,7 +140,6 @@ void handleIPkg(char *buffer, int size){
 }
 
 void handleEndPkg(char *buffer, int size){
-  // percebe que e o pacote end e termina.
   fclose(file);
 }
 

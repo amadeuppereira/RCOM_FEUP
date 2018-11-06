@@ -1,3 +1,5 @@
+// Logic -- Data Link Layer
+
 #include "logic.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -95,18 +97,8 @@ int setup(char *port) {
     return ERROR;
   }
 
-  connectionInfo();
   printf("*** New termios structure set ***\n");
   return fd;
-}
-
-void printBuffer(char *buff, int finalLength){
-	int i;
-	for(i = 0; i < finalLength; i++){
-		printf("%d: 0x%x ", i, buff[i]);
-	}
-
-	printf("\n\n");
 }
 
 int readFrame(Frame* f){
@@ -244,17 +236,6 @@ char* destuffing(char* buf, int* size) {
 		else {
 			ret[j] = buf[i];
 		}
-		// if (buf[i] == 0x7d && buf[i+1] == 0x5e){
-		// 	ret[j] = 0x7e;
-		// 	i++;
-		// }
-		// else if (buf[i] == 0x7d && buf[i+1] == 0x5d){
-		// 	ret[j] = 0x7d;
-		// 	i++;
-		// }
-		// else {
-		// 	ret[j] = buf[i];
-		// }
 	}
 
 	*size = new_size;
@@ -292,11 +273,11 @@ void simulateErrors(Frame* f) {
 
 	float r = rand() / ((float) RAND_MAX);
 	r *= 100;
+
 	//Insert error in data
 	if(r < statistics.errorProbability_data) {
 		int index = rand() % (length - 6);
 		index += 4;
-		// f->msg[index] = 0x00;
 		f->msg[index] = rand();
 	}
 
@@ -307,9 +288,7 @@ void simulateErrors(Frame* f) {
 		int index = rand() % 4;
 		index += 1;
 		if(index == 4) index = length - 2;
-		// f->msg[index] = 0x00;
 		f->msg[index] = rand();
-
 	}
 }
 
@@ -347,16 +326,20 @@ int llread(char **buffer){
 	}
 
 	int size;
+
 	// remover cabeçalho e flag inicial
 	char* buf1 = deconstructFrame(f, &size);
 	free(f.msg);
+
 	// extrair pacote de comando da trama - destuffing
 	char* buf2 = destuffing(buf1, &size);
 	free(buf1);
+
 	if(buf2 == NULL) {
 		rejectFrame(C_FLAG);
 		return 0;
 	}
+
 	// ver valor do bcc2 se está correcto
 	if(checkBCC2(buf2, size)) {
 		size--;
@@ -415,6 +398,7 @@ int llopen_Receiver(){
 }
 
 int sendMsg(Frame f) {
+
 	// write on serial port
 	int res = write(fd, f.msg, sizeof(char) * f.length);
 	return res;
@@ -499,6 +483,8 @@ int llopen_Sender(){
 
 int llopen(int type){
   program = type;
+
+  connectionInfo();
 
   if(program == TRANSMITTER){
     return llopen_Sender();
@@ -609,8 +595,8 @@ int llwrite(char *buffer, int length){
 	int rej = 1;
 
 	gettimeofday(&timerStart, NULL);
-	do {
 
+	do {
 		int ret = sendFrame(f, &response);
 		if(ret != ERROR) {
 			statistics.sent++;
@@ -647,7 +633,6 @@ int llwrite(char *buffer, int length){
 	statistics.framesTotalTime += (timerEnd.tv_sec - timerStart.tv_sec)*1000.0f +
 																(timerEnd.tv_usec - timerStart.tv_usec)/1000.0f;
 	statistics.framesCounter++;
-
 
 	free(f.msg);
 	return 0;

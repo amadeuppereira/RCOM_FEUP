@@ -1,3 +1,5 @@
+// Sender -- Application Layer
+
 #include "logic.h"
 #include <stdio.h>
 #include <string.h>
@@ -43,7 +45,7 @@ int main(int argc, char** argv){
 	action.sa_flags = 0;
 	sigaction(SIGALRM, &action, NULL);
 
-  // 1 ler dados do ficheiro
+  // ler dados do ficheiro
   fileSize = getFileSize(argv[2]);
   if(fileSize == -1) {
     printf("Error: could not get file size\n");
@@ -71,19 +73,19 @@ int main(int argc, char** argv){
       printf("*** Connection Successful ***\n\n");
   }
 
-  //2 gerar pacote start
+  // gerar pacote start
   if(sendStartPackage(argv[2], fileSize) == ERROR){
     printf("\nError: could not send Start package\n");
     return ERROR;
   }
 
-  // 3 gerar n pacotes com k dados lidos do ficheiro
+  // gerar n pacotes com k dados lidos do ficheiro
   if(sendFPackages(argv[2]) == ERROR){
     printf("\nError: could not send F packages\n");
     return ERROR;
   }
 
-  // 4 gerar pacote start
+  // gerar pacote start
   if(sendEndPackage(argv[2], fileSize) == ERROR){
     printf("\nError: could not send End package\n");
     return ERROR;
