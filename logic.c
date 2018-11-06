@@ -97,7 +97,7 @@ int setup(char *port) {
     return ERROR;
   }
 
-  printf("*** New termios structure set ***\n");
+  printf("\n*** New termios structure set ***\n");
   return fd;
 }
 
