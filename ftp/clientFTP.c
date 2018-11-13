@@ -12,10 +12,9 @@ int main(int argc, char** argv){
 	if (openSocket(argv[1], atoi(argv[2]))){
 		perror("Error opening socket.");
 		return -1;
-	} else {
-		// read server response
-		readTCP();
 	}
+	// read server msg
+	readTCP();
 
 	// write username
 	writeTCP("USER anonymous");
