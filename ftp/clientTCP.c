@@ -40,12 +40,23 @@ int openSocket(char *ip, int port){
 	}
 }
 
+int readTCP(){
+	int bytes;
+	char response[516];
+
+	/* read server response */
+	bytes = read(sockfd, response, sizeof(char) * 516);
+	printf("READ: %s, size: %d\n", response, bytes);
+
+	return bytes;
+}
+
 int writeTCP(char *msg){
 	int	bytes;
 
 	/* send a string to the server */
 	bytes = write(sockfd, msg, strlen(msg));
-	printf("Bytes escritos %d\n", bytes);
+	printf("WRITE: %s, size: %d\n", msg, bytes);
 
 	return bytes;
 }

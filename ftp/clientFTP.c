@@ -2,11 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int login(char *username, char *password) {
-	//writeTCP("USER " + username);
-	//writeTCP("PASS " + password);
-}
-
 int main(int argc, char** argv){
 
 	if (argc != 3){
@@ -17,13 +12,20 @@ int main(int argc, char** argv){
 	if (openSocket(argv[1], atoi(argv[2]))){
 		perror("Error opening socket.");
 		return -1;
+	} else {
+		// read server response
+		readTCP();
 	}
 
-	char login[] = "USER";
-
-	
+	// write username
 	writeTCP("USER anonymous");
+	// read response
+	readTCP();
+	
+	// write password
 	writeTCP("PASS anonymous");
+	// read response
+	readTCP();
 
 	return 0;
 }

@@ -5,6 +5,8 @@ int openSocket(char *ip, int port);
 
 int writeTCP(char *msg);
 
+int readTCP();
+
 int closeSocket();
 
 #endif
