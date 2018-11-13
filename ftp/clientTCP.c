@@ -1,5 +1,4 @@
 /*      (C)2000 FEUP  */
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -12,9 +11,6 @@
 #include <strings.h>
 #include <string.h>
 
-#define SERVER_PORT 21
-#define SERVER_ADDR "192.168.109.132"
-
 int	sockfd;
 
 int openSocket(char *ip, int port){
@@ -23,24 +19,35 @@ int openSocket(char *ip, int port){
 	/*server address handling*/
 	bzero((char*)&server_addr,sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
-	server_addr.sin_addr.s_addr = inet_addr(SERVER_ADDR);	/*32 bit Internet address network byte ordered*/
-	server_addr.sin_port = htons(SERVER_PORT);		/*server TCP port must be network byte ordered */
+	server_addr.sin_addr.s_addr = inet_addr(ip);	/*32 bit Internet address network byte ordered*/
+	server_addr.sin_port = htons(port);		/*server TCP port must be network byte ordered */
 
 	/*open an TCP socket*/
 	if ((sockfd = socket(AF_INET,SOCK_STREAM,0)) < 0) {
 		perror("socket()");
-		exit(0);
+		return -1;
 	} else {
-		printf("TCP socket opened!\n");
+		printf("TCP socket opened to %s:%d!\n", ip, port);
 	}
 
 	/*connect to the server*/
 	if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0){
 		perror("connect()");
-		exit(0);
+		return -1;
 	} else {
 		printf("Connected to the server successfully!\n");
+		return 0;
 	}
+}
+
+int writeTCP(char *msg){
+	int	bytes;
+
+	/* send a string to the server */
+	bytes = write(sockfd, msg, strlen(msg));
+	printf("Bytes escritos %d\n", bytes);
+
+	return bytes;
 }
 
 int closeSocket(){

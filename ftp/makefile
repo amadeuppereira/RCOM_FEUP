@@ -1,10 +1,7 @@
 all: clientFTP
 
-clientFTP: clientTCP.o
-	gcc clientFTP.c -o clientFTP
-
-clientTCP.o:
-	gcc -c clientTCP.c
+clientFTP: 
+	gcc clientTCP.c clientFTP.c -o clientFTP
 
 clean:
-	rm getip clientFTP
+	rm getip clientFTP *.o

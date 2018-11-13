@@ -2,27 +2,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int login(char *username, char *password) {
+	//writeTCP("USER " + username);
+	//writeTCP("PASS " + password);
+}
+
 int main(int argc, char** argv){
 
-	if (argc != 2){
+	if (argc != 3){
 		perror("Not enought arguments.\n");
+		return -1;
 	}
 
-	exit(0);
+	if (openSocket(argv[1], atoi(argv[2]))){
+		perror("Error opening socket.");
+		return -1;
+	}
 
-  /*
-	setup();
+	char login[] = "USER";
 
-	char	buf[] = "Mensagem de teste na travessia da pilha TCP/IP\n";
-	int	bytes;
+	
+	writeTCP("USER anonymous");
+	writeTCP("PASS anonymous");
 
-	/*send a string to the server
-	bytes = write(sockfd, buf, strlen(buf));
-	printf("Bytes escritos %d\n", bytes);
-
-	return closeSocket();
-
-
-
-	exit(0);*/
+	return 0;
 }
