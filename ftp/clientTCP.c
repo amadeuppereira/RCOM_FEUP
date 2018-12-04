@@ -11,6 +11,9 @@
 #include <strings.h>
 #include <string.h>
 
+#define CR 0x0d
+#define LF 0x0a
+
 int	sockfd;
 
 int openSocket(char *ip, int port){
@@ -53,6 +56,8 @@ int readTCP(){
 
 int writeTCP(char *msg){
 	int	bytes;
+
+	strcat(msg, "\r\n");
 
 	/* send a string to the server */
 	bytes = write(sockfd, msg, strlen(msg));
