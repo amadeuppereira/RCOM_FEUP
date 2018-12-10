@@ -16,8 +16,36 @@
 
 int	sockfd;
 
-int openSocket(char *ip, int port){
+char * getIP(char *hostname){
+	struct hostent *h;
+
+	if ((h=gethostbyname(hostname)) == NULL) {
+		herror("gethostbyname");
+		return NULL;
+	}
+
+	printf("Host name  : %s\n", h->h_name);
+	printf("IP Address : %s\n",inet_ntoa(*((struct in_addr *)h->h_addr)));
+
+	return inet_ntoa(*((struct in_addr *)h->h_addr));
+}
+
+int readTCP(){
+	int bytes;
+	char buffer[1024];
+
+	/* read server response */
+	bytes = recv(sockfd, buffer, sizeof(char) * 1024, 0);
+	printf("<-: %s |\n", buffer);
+
+	return bytes;
+}
+
+int openSocket(char *hostname, int port){
 	struct	sockaddr_in server_addr;
+
+	// get ip from hostname
+	char *ip = getIP(hostname);
 
 	/*server address handling*/
 	bzero((char*)&server_addr,sizeof(server_addr));
@@ -38,20 +66,8 @@ int openSocket(char *ip, int port){
 		perror("connect()");
 		return -1;
 	} else {
-		printf("Connected to the server successfully!\n");
-		return 0;
+		return readTCP() > 0 ? 0 : 1;
 	}
-}
-
-int readTCP(){
-	int bytes;
-	char response[516];
-
-	/* read server response */
-	bytes = read(sockfd, response, sizeof(char) * 516);
-	printf("READ: %s, size: %d\n", response, bytes);
-
-	return bytes;
 }
 
 int writeTCP(char *msg){
@@ -59,10 +75,14 @@ int writeTCP(char *msg){
 
 	strcat(msg, "\r\n");
 
-	/* send a string to the server */
-	bytes = write(sockfd, msg, strlen(msg));
-	printf("WRITE: %s, size: %d\n", msg, bytes);
+	//printf("Will write: %s\n", msg);
 
+	/* send a string to the server */
+	bytes = send(sockfd, msg, strlen(msg) * sizeof(char), 0);
+
+	printf("->: %s |\n", msg);
+
+	/* read response */
 	return bytes;
 }
 

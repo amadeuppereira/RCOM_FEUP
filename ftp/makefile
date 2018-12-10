@@ -1,8 +1,10 @@
-all: clientFTP clientTCP
-	gcc clientTCP.o clientFTP.o -o download
+all: clientFTP clientTCP download
+	gcc clientTCP.o clientFTP.o download.o -o download
 
+download: 
+	gcc download.c -c
 
-clientFTP: clientTCP
+clientFTP: 
 	gcc clientFTP.c -c 
 
 clientTCP:
