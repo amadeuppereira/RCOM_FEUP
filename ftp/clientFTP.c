@@ -8,7 +8,8 @@
 #define USER "USER"
 #define PASS "PASS"
 
-int writeFTP(char *cmd, char *arg){
+int writeFTP(char *cmd, char *arg)
+{
 	char buffer[256] = "";
 
 	strlcat(buffer, cmd, sizeof(buffer));
@@ -19,38 +20,47 @@ int writeFTP(char *cmd, char *arg){
 	int r = writeTCP(buffer) > 0 ? 0 : -1;
 
 	// error writing message
-	if (r) return -1;
-	else return readTCP() > 0 ? 0 : -1;
+	if (r)
+		return -1;
+	else
+		return readTCP() > 0 ? 0 : -1;
 }
 
-int auth(char *user, char* password){
+int auth(char *user, char *password)
+{
 	// send user
-	if (writeFTP(USER, user) < 0){
+	if (writeFTP(USER, user) < 0)
+	{
 		return -1;
-	} 
+	}
 
 	// send password
-	if (writeFTP(PASS, password) < 0){
+	if (writeFTP(PASS, password) < 0)
+	{
 		return -1;
 	}
 
 	return 0;
 }
 
-int downloadFile(char *filePath){
+int downloadFile(char *filePath)
+{
 	// write download file command
 	return writeFTP("RETR", filePath == NULL ? "." : filePath);
 }
 
-int setup (char *ip, char *user, char *password) {
+int setup(char *ip, char *user, char *password)
+{
 	// connect to socket
-	if (openSocket(ip, PORT)){
+	if (openSocket(ip, PORT))
+	{
 		perror("Error opening socket.");
 		return -1;
-	} 
+	}
 
 	// login to ftp server
-	if (auth(user, password)){
+	if (auth(user, password))
+	{
 		perror("Auth error: ");
 		return -1;
 	}
@@ -58,6 +68,7 @@ int setup (char *ip, char *user, char *password) {
 	return 0;
 }
 
-int closeFTP () {
+int closeFTP()
+{
 	return closeSocket();
 }

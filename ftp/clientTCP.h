@@ -10,4 +10,3 @@ int readTCP();
 int closeSocket();
 
 #endif
-

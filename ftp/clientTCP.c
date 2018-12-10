@@ -14,23 +14,26 @@
 #define CR 0x0d
 #define LF 0x0a
 
-int	sockfd;
+int sockfd;
 
-char * getIP(char *hostname){
+char *getIP(char *hostname)
+{
 	struct hostent *h;
 
-	if ((h=gethostbyname(hostname)) == NULL) {
+	if ((h = gethostbyname(hostname)) == NULL)
+	{
 		herror("gethostbyname");
 		return NULL;
 	}
 
 	printf("Host name  : %s\n", h->h_name);
-	printf("IP Address : %s\n",inet_ntoa(*((struct in_addr *)h->h_addr)));
+	printf("IP Address : %s\n", inet_ntoa(*((struct in_addr *)h->h_addr)));
 
 	return inet_ntoa(*((struct in_addr *)h->h_addr));
 }
 
-int readTCP(){
+int readTCP()
+{
 	int bytes;
 	char buffer[256] = "";
 
@@ -41,37 +44,45 @@ int readTCP(){
 	return bytes;
 }
 
-int openSocket(char *hostname, int port){
+int openSocket(char *hostname, int port)
+{
 	struct sockaddr_in server_addr;
 
 	// get ip from hostname
 	char *ip = getIP(hostname);
 
 	/*server address handling*/
-	bzero((char*)&server_addr,sizeof(server_addr));
+	bzero((char *)&server_addr, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
-	server_addr.sin_addr.s_addr = inet_addr(ip);	/*32 bit Internet address network byte ordered*/
-	server_addr.sin_port = htons(port);		/*server TCP port must be network byte ordered */
+	server_addr.sin_addr.s_addr = inet_addr(ip); /*32 bit Internet address network byte ordered*/
+	server_addr.sin_port = htons(port);			 /*server TCP port must be network byte ordered */
 
 	/*open an TCP socket*/
-	if ((sockfd = socket(AF_INET,SOCK_STREAM,0)) < 0) {
+	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	{
 		perror("socket()");
 		return -1;
-	} else {
+	}
+	else
+	{
 		printf("TCP socket opened to %s:%d!\n", ip, port);
 	}
 
 	/*connect to the server*/
-	if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0){
+	if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+	{
 		perror("connect()");
 		return -1;
-	} else {
+	}
+	else
+	{
 		return readTCP() > 0 ? 0 : 1;
 	}
 }
 
-int writeTCP(char *msg){
-	int	bytes;
+int writeTCP(char *msg)
+{
+	int bytes;
 
 	strcat(msg, "\r\n");
 
@@ -84,6 +95,7 @@ int writeTCP(char *msg){
 	return bytes;
 }
 
-int closeSocket(){
+int closeSocket()
+{
 	return close(sockfd);
 }

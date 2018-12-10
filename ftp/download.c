@@ -3,19 +3,23 @@
 #include <string.h>
 #include <stdlib.h>
 
-void removeSubstr (char *string, char *sub) {
-    char *match;
-    int len = strlen(sub);
-    while ((match = strstr(string, sub))) {
-        *match = '\0';
-        strcat(string, match+len);
-    }
+void removeSubstr(char *string, char *sub)
+{
+	char *match;
+	int len = strlen(sub);
+	while ((match = strstr(string, sub)))
+	{
+		*match = '\0';
+		strcat(string, match + len);
+	}
 }
 
-int main(int argc, char** argv){
+int main(int argc, char **argv)
+{
 	char *urlPath, *ip, *user, *password, *pch, *url;
 
-	if (argc != 2){
+	if (argc != 2)
+	{
 		printf("Not enought arguments.\n");
 		printf("Usage: ftp://[<user>:<password>@]<host>/<url-path>\n");
 		return -1;
@@ -30,48 +34,56 @@ int main(int argc, char** argv){
 	pch = strtok(url, "/:@");
 	int count = 0;
 
-	while (pch != NULL){
+	while (pch != NULL)
+	{
 		int size = sizeof(char) * strlen(pch);
 
 		// user
-		if (count == 0){
+		if (count == 0)
+		{
 			user = malloc(size);
 			strcpy(user, pch);
 		}
 
 		// password
-		else if (count == 1){
+		else if (count == 1)
+		{
 			password = malloc(size);
 			strcpy(password, pch);
 		}
 
 		// ip
-		else if (count == 2){
+		else if (count == 2)
+		{
 			ip = malloc(size);
 			strcpy(ip, pch);
 		}
 
 		// file path
-		else if (count == 3){
+		else if (count == 3)
+		{
 			urlPath = malloc(size);
 			strcpy(urlPath, pch);
 		}
 
-		pch = strtok (NULL, "/:@");
+		pch = strtok(NULL, "/:@");
 		count++;
-  	}
+	}
 
-	if (user == NULL){
+	if (user == NULL)
+	{
 		printf("User can't be null.");
 		exit(-1);
 	}
 
-	if (ip == NULL){
+	if (ip == NULL)
+	{
 		printf("Ip can't be null.");
 		exit(-1);
 	}
 
-	if (password == NULL){
+	if (password == NULL)
+	{
 		printf("Password can't be null.");
 		exit(-1);
 	}
