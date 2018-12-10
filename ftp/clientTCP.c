@@ -32,17 +32,17 @@ char * getIP(char *hostname){
 
 int readTCP(){
 	int bytes;
-	char buffer[1024];
+	char buffer[256] = "";
 
 	/* read server response */
-	bytes = recv(sockfd, buffer, sizeof(char) * 1024, 0);
-	printf("<-: %s |\n", buffer);
+	bytes = recv(sockfd, buffer, sizeof(buffer), 0);
+	printf("->: %s |\n", buffer);
 
 	return bytes;
 }
 
 int openSocket(char *hostname, int port){
-	struct	sockaddr_in server_addr;
+	struct sockaddr_in server_addr;
 
 	// get ip from hostname
 	char *ip = getIP(hostname);
@@ -75,12 +75,10 @@ int writeTCP(char *msg){
 
 	strcat(msg, "\r\n");
 
-	//printf("Will write: %s\n", msg);
-
 	/* send a string to the server */
 	bytes = send(sockfd, msg, strlen(msg) * sizeof(char), 0);
 
-	printf("->: %s |\n", msg);
+	printf("<-: %s |\n", msg);
 
 	/* read response */
 	return bytes;

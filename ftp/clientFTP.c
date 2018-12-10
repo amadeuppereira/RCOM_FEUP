@@ -5,39 +5,32 @@
 #include <string.h>
 
 #define PORT 21
+#define USER "USER"
+#define PASS "PASS"
 
 int writeFTP(char *cmd, char *arg){
-	int size = strlen(cmd) + strlen(arg);
+	char buffer[256] = "";
 
-	// alloc space for msg
-	char *msg = malloc(size);
+	strlcat(buffer, cmd, sizeof(buffer));
+	strlcat(buffer, " ", sizeof(buffer));
+	strlcat(buffer, arg, sizeof(buffer));
 
-	strcat(msg, cmd);
-	strcat(msg, " ");
-	strcat(msg, arg);
-
-	// write full msg to tcp socket
-	int r = writeTCP(msg) > 0 ? 0 : -1;
-
-	// free msg space
-	free(msg);
+	// write msg to tcp socket
+	int r = writeTCP(buffer) > 0 ? 0 : -1;
 
 	// error writing message
-	if (r){
-		return -1;
-	}
-
-	return readTCP() > 0 ? 0 : -1;
+	if (r) return -1;
+	else return readTCP() > 0 ? 0 : -1;
 }
 
 int auth(char *user, char* password){
 	// send user
-	if (writeFTP("USER", user) < 0){
+	if (writeFTP(USER, user) < 0){
 		return -1;
 	} 
 
 	// send password
-	if (writeFTP("PASS", password) < 0){
+	if (writeFTP(PASS, password) < 0){
 		return -1;
 	}
 
