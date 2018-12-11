@@ -46,7 +46,7 @@ int auth(char *user, char *password)
 int downloadFile(char *filePath)
 {
 	// write download file command
-	return writeFTP("RETR", filePath == NULL ? "." : filePath);
+	return writeFTP("RETR", filePath == NULL ? "" : filePath);
 }
 
 int setup(char *ip, char *user, char *password)
@@ -58,12 +58,21 @@ int setup(char *ip, char *user, char *password)
 		return -1;
 	}
 
+	printf("\n");
+
 	// login to ftp server
 	if (auth(user, password))
 	{
 		perror("Auth error: ");
 		return -1;
 	}
+
+	// set passive mode
+	/*if (writeFTP("PASV", ""))
+	{
+		perror("Error entering passive mode.");
+		return -1;
+	}*/
 
 	return 0;
 }

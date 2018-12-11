@@ -5,4 +5,6 @@ int setup(char *ip, char *user, char *password);
 
 int closeFTP();
 
+int downloadFile(char *filePath);
+
 #endif // _CLIENT_FTP_H_

@@ -35,11 +35,52 @@ char *getIP(char *hostname)
 int readTCP()
 {
 	int bytes;
-	char buffer[256] = "";
+	char buffer;
+	char line[256] = "";
+	int state = 0;
+	int count = 0;
 
 	/* read server response */
-	bytes = recv(sockfd, buffer, sizeof(buffer), 0);
-	printf("->: %s |\n", buffer);
+	do
+	{
+		bytes = recv(sockfd, &buffer, sizeof(buffer), 0);
+		line[count++] = buffer;
+		printf("%c", buffer);
+
+		switch (state)
+		{
+		case 0:
+			if (buffer == '\r')
+			{
+				state = 1;
+			}
+			break;
+		case 1:
+
+			if (buffer == '\n')
+			{
+
+				if (line[3] == ' ')
+				{
+					state = 2;
+				}
+				else
+				{
+					state = 0;
+					strcpy(line, "");
+					count = 0;
+				}
+			}
+			else
+			{
+				state = 0;
+			}
+			break;
+		default:
+			break;
+		}
+
+	} while (state != 2);
 
 	return bytes;
 }
@@ -50,6 +91,11 @@ int openSocket(char *hostname, int port)
 
 	// get ip from hostname
 	char *ip = getIP(hostname);
+
+	if (ip == NULL)
+	{
+		return -1;
+	}
 
 	/*server address handling*/
 	bzero((char *)&server_addr, sizeof(server_addr));
@@ -89,7 +135,7 @@ int writeTCP(char *msg)
 	/* send a string to the server */
 	bytes = send(sockfd, msg, strlen(msg) * sizeof(char), 0);
 
-	printf("<-: %s |\n", msg);
+	printf("%s", msg);
 
 	/* read response */
 	return bytes;

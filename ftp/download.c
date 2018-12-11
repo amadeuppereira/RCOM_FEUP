@@ -98,7 +98,8 @@ int main(int argc, char **argv)
 	setup(ip, user, password);
 
 	// TODO: download file
-	/*if (downloadFile(urlPath)){
+	/*if (downloadFile(urlPath))
+	{
 		perror("Download file error: ");
 		return -1;
 	}*/
