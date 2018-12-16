@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/socket.h>
 
 #define PORT 21
 #define USER "USER"
@@ -58,6 +59,9 @@ int downloadFtp(char *filePath)
 	}
 
 	char *msg = readTcp(primaryFtpSocket);
+
+	printf("%s\n", msg);
+
 	char *token = "";
 
 	token = strtok(msg, " ");
@@ -68,14 +72,11 @@ int downloadFtp(char *filePath)
 	{
 	case 550:
 		token = strtok(NULL, "");
-		printf("%s\n", token);
 		free(msg);
 		return -1;
 	default:
 		break;
 	}
-
-	printf("%d\n", code);
 
 	free(msg);
 
@@ -107,25 +108,32 @@ int parsePasvMsg(char *msg)
 	return firstNumber * 256 + secondNumber;
 }
 
+// TODO: retornar nome do ficheiro
+char *getFileName(char *filePath)
+{
+	char *token = strtok(filePath, "/");
+
+	return token;
+}
+
 int receiveFile(char *filePath)
 {
 	// receive file
-	FILE *f = fopen(filePath, "a");
+	FILE *f = fopen(getFileName(filePath), "w");
 
 	if (f == NULL)
 	{
 		return -1;
 	}
-	do
-	{
-		char *msg = readTcp(secondaryFtpSocket);
 
-		f = fopen(filePath, "a");
+	char buffer[1024];
 
-		// Write msg to file
-		fprintf(f, "%s", msg);
+	int bytes = recv(secondaryFtpSocket, &buffer, sizeof(buffer), 0);
 
-	} while (1);
+	// Write strting received to file
+	fprintf(f, "%s", buffer);
+
+	fclose(f);
 
 	return 0;
 }
@@ -179,13 +187,18 @@ int downloadFile(char *ip, char *user, char *password, char *filePath)
 			return -1;
 		}
 
-		printf("Secondary socket opened.\n");
+		if (receiveFile(filePath))
+		{
+			printf("Error receiving file.\n");
+		}
 
-		receiveFile(filePath);
+		printf("Finished child process.\n");
 	}
 	else if (pchild < 0)
 	{
 		status = -1;
+		free(msg);
+		return -1;
 	}
 
 	// parent process
