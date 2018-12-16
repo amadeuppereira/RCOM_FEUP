@@ -1,10 +1,8 @@
 #ifndef _CLIENT_FTP_H_
 #define _CLIENT_FTP_H_
 
-int setup(char *ip, char *user, char *password);
-
 int closeFTP();
 
-int downloadFile(char *filePath);
+int downloadFile(char *ip, char *user, char *password, char *filePath);
 
 #endif // _CLIENT_FTP_H_
