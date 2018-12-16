@@ -20,16 +20,7 @@ int writeFTP(int ftpSocket, char *cmd, char *arg)
 	strlcat(buffer, arg, sizeof(buffer));
 
 	// write msg to tcp socket
-	int r = writeTcp(ftpSocket, buffer) > 0 ? 0 : -1;
-
-	// error writing message
-	if (r)
-		return -1;
-	else
-	{
-		char *msg = readTcp(ftpSocket);
-		printf("%s\n", msg);
-	}
+	return writeTcp(ftpSocket, buffer) > 0 ? 0 : -1;
 }
 
 int auth(char *user, char *password)
@@ -40,12 +31,19 @@ int auth(char *user, char *password)
 		return -1;
 	}
 
+	char *msg = readTcp(primaryFtpSocket);
+	printf("%s\n", msg);
+
 	// send password
 	if (writeFTP(primaryFtpSocket, PASS, password) < 0)
 	{
 		return -1;
 	}
 
+	msg = readTcp(primaryFtpSocket);
+	printf("%s\n", msg);
+
+	free(msg);
 	return 0;
 }
 
@@ -53,6 +51,34 @@ int downloadFile(char *filePath)
 {
 	// write download file command
 	return writeFTP(primaryFtpSocket, "RETR", filePath == NULL ? "" : filePath);
+}
+
+int parsePasvMsg(char *msg)
+{
+	char *token = "";
+	int port = 0;
+
+	token = strtok(msg, "(,)");
+
+	token = strtok(NULL, "(,)");
+
+	token = strtok(NULL, "(,)");
+
+	token = strtok(NULL, "(,)");
+
+	token = strtok(NULL, "(,)");
+
+	token = strtok(NULL, "(,)");
+
+	token = strtok(NULL, "(,)");
+
+	int firstNumber = strtol(token, NULL, 10);
+
+	token = strtok(NULL, "(,)");
+
+	int secondNumber = strtol(token, NULL, 10);
+
+	return firstNumber * 256 + secondNumber;
 }
 
 int setup(char *ip, char *user, char *password)
@@ -83,8 +109,22 @@ int setup(char *ip, char *user, char *password)
 		return -1;
 	}
 
-	// TODO: connect to secondary socket
+	msg = readTcp(primaryFtpSocket);
+	printf("%s\n", msg);
 
+	// TODO: connect to secondary socket
+	int secondaryPort = parsePasvMsg(msg);
+	secondaryFtpSocket = openTcpSocket(ip, secondaryPort);
+
+	if (secondaryFtpSocket < 0)
+	{
+		perror("Error opening secondary socket.");
+		return -1;
+	}
+
+	printf("%d\n", secondaryPort);
+
+	free(msg);
 	return 0;
 }
 
