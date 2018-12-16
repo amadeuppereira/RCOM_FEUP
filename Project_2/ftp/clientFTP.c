@@ -8,7 +8,10 @@
 #define USER "USER"
 #define PASS "PASS"
 
-int writeFTP(char *cmd, char *arg)
+int primaryFtpSocket;
+int secondaryFtpSocket;
+
+int writeFTP(int ftpSocket, char *cmd, char *arg)
 {
 	char buffer[256] = "";
 
@@ -17,25 +20,25 @@ int writeFTP(char *cmd, char *arg)
 	strlcat(buffer, arg, sizeof(buffer));
 
 	// write msg to tcp socket
-	int r = writeTCP(buffer) > 0 ? 0 : -1;
+	int r = writeTcp(ftpSocket, buffer) > 0 ? 0 : -1;
 
 	// error writing message
 	if (r)
 		return -1;
 	else
-		return readTCP() > 0 ? 0 : -1;
+		return readTcp(ftpSocket) > 0 ? 0 : -1;
 }
 
 int auth(char *user, char *password)
 {
 	// send user
-	if (writeFTP(USER, user) < 0)
+	if (writeFTP(primaryFtpSocket, USER, user) < 0)
 	{
 		return -1;
 	}
 
 	// send password
-	if (writeFTP(PASS, password) < 0)
+	if (writeFTP(primaryFtpSocket, PASS, password) < 0)
 	{
 		return -1;
 	}
@@ -46,19 +49,18 @@ int auth(char *user, char *password)
 int downloadFile(char *filePath)
 {
 	// write download file command
-	return writeFTP("RETR", filePath == NULL ? "" : filePath);
+	return writeFTP(primaryFtpSocket, "RETR", filePath == NULL ? "" : filePath);
 }
 
 int setup(char *ip, char *user, char *password)
 {
 	// connect to socket
-	if (openSocket(ip, PORT))
+	primaryFtpSocket = openTcpSocket(ip, PORT);
+	if (primaryFtpSocket < 0)
 	{
 		perror("Error opening socket.");
 		return -1;
 	}
-
-	printf("\n");
 
 	// login to ftp server
 	if (auth(user, password))
@@ -68,16 +70,20 @@ int setup(char *ip, char *user, char *password)
 	}
 
 	// set passive mode
-	/*if (writeFTP("PASV", ""))
+	if (writeFTP(primaryFtpSocket, "PASV", ""))
 	{
 		perror("Error entering passive mode.");
 		return -1;
-	}*/
+	}
+
+	// TODO: connect to secondary socket
 
 	return 0;
 }
 
 int closeFTP()
 {
-	return closeSocket();
+	closeTcpSocket(primaryFtpSocket);
+	closeTcpSocket(secondaryFtpSocket);
+	return 0;
 }

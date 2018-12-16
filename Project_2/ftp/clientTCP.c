@@ -11,11 +11,6 @@
 #include <strings.h>
 #include <string.h>
 
-#define CR 0x0d
-#define LF 0x0a
-
-int sockfd;
-
 char *getIP(char *hostname)
 {
 	struct hostent *h;
@@ -32,7 +27,7 @@ char *getIP(char *hostname)
 	return inet_ntoa(*((struct in_addr *)h->h_addr));
 }
 
-int readTCP()
+int readTcp(int socket)
 {
 	int bytes;
 	char buffer;
@@ -43,7 +38,7 @@ int readTCP()
 	/* read server response */
 	do
 	{
-		bytes = recv(sockfd, &buffer, sizeof(buffer), 0);
+		bytes = recv(socket, &buffer, sizeof(buffer), 0);
 		line[count++] = buffer;
 		printf("%c", buffer);
 
@@ -56,12 +51,13 @@ int readTCP()
 			}
 			break;
 		case 1:
-
 			if (buffer == '\n')
 			{
+				//printf("%s", line);
 
 				if (line[3] == ' ')
 				{
+					printf("\t->reached state 2");
 					state = 2;
 				}
 				else
@@ -82,11 +78,14 @@ int readTCP()
 
 	} while (state != 2);
 
+	printf("\t->Finished reading message.\n");
+
 	return bytes;
 }
 
-int openSocket(char *hostname, int port)
+int openTcpSocket(char *hostname, int port)
 {
+	int tcpSocket = 0;
 	struct sockaddr_in server_addr;
 
 	// get ip from hostname
@@ -104,7 +103,7 @@ int openSocket(char *hostname, int port)
 	server_addr.sin_port = htons(port);			 /*server TCP port must be network byte ordered */
 
 	/*open an TCP socket*/
-	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	if ((tcpSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 	{
 		perror("socket()");
 		return -1;
@@ -115,25 +114,33 @@ int openSocket(char *hostname, int port)
 	}
 
 	/*connect to the server*/
-	if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+	if (connect(tcpSocket, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
 	{
 		perror("connect()");
 		return -1;
 	}
 	else
 	{
-		return readTCP() > 0 ? 0 : 1;
+		// read server welcoming message
+		if (readTcp(tcpSocket) > 0)
+		{
+			return tcpSocket;
+		}
+		else
+		{
+			return -1;
+		}
 	}
 }
 
-int writeTCP(char *msg)
+int writeTcp(int socket, char *msg)
 {
 	int bytes;
 
 	strcat(msg, "\r\n");
 
 	/* send a string to the server */
-	bytes = send(sockfd, msg, strlen(msg) * sizeof(char), 0);
+	bytes = send(socket, msg, strlen(msg) * sizeof(char), 0);
 
 	printf("%s", msg);
 
@@ -141,7 +148,7 @@ int writeTCP(char *msg)
 	return bytes;
 }
 
-int closeSocket()
+int closeTcpSocket(int socket)
 {
-	return close(sockfd);
+	return close(socket);
 }
