@@ -45,7 +45,7 @@ int readTCP()
 	{
 		bytes = recv(sockfd, &buffer, sizeof(buffer), 0);
 		line[count++] = buffer;
-		printf("%c", buffer);
+		//printf("%c", buffer);
 
 		switch (state)
 		{
@@ -56,12 +56,13 @@ int readTCP()
 			}
 			break;
 		case 1:
-
 			if (buffer == '\n')
 			{
+				printf("%s", line);
 
 				if (line[3] == ' ')
 				{
+					printf("\t->reached state 2");
 					state = 2;
 				}
 				else
@@ -81,6 +82,8 @@ int readTCP()
 		}
 
 	} while (state != 2);
+
+	printf("\t->Finished reading message.\n");
 
 	return bytes;
 }

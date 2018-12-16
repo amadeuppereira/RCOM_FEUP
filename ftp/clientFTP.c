@@ -68,11 +68,11 @@ int setup(char *ip, char *user, char *password)
 	}
 
 	// set passive mode
-	/*if (writeFTP("PASV", ""))
+	if (writeFTP("PASV", ""))
 	{
 		perror("Error entering passive mode.");
 		return -1;
-	}*/
+	}
 
 	return 0;
 }
