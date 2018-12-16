@@ -127,6 +127,11 @@ int main(int argc, char **argv)
 		exit(-1);
 	}
 
+	if(urlPath == NULL){
+		printf("URL Path can't be null.");
+		exit(-1);
+	}
+
 	printf("------------------------------------\n");
 	printf("Connecting to ftp://%s ...\n", ip);
 	printf("User: %s, pass: %s.\n", user, password);
