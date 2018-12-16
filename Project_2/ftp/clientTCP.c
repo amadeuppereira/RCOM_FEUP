@@ -27,20 +27,24 @@ char *getIP(char *hostname)
 	return inet_ntoa(*((struct in_addr *)h->h_addr));
 }
 
-int readTcp(int socket)
+char *readTcp(int socket)
 {
+	char *msg = malloc(sizeof(char));
 	int bytes;
 	char buffer;
 	char line[256] = "";
 	int state = 0;
-	int count = 0;
+	int count = 0, msgLength = 0;
 
 	/* read server response */
 	do
 	{
 		bytes = recv(socket, &buffer, sizeof(buffer), 0);
 		line[count++] = buffer;
-		printf("%c", buffer);
+
+		// copy buffer to final message
+		msg = realloc(msg, sizeof(msg) + sizeof(char) * (msgLength + 1));
+		msg[msgLength++] = buffer;
 
 		switch (state)
 		{
@@ -53,11 +57,8 @@ int readTcp(int socket)
 		case 1:
 			if (buffer == '\n')
 			{
-				//printf("%s", line);
-
 				if (line[3] == ' ')
 				{
-					printf("\t->reached state 2");
 					state = 2;
 				}
 				else
@@ -78,9 +79,7 @@ int readTcp(int socket)
 
 	} while (state != 2);
 
-	printf("\t->Finished reading message.\n");
-
-	return bytes;
+	return msg;
 }
 
 int openTcpSocket(char *hostname, int port)
@@ -119,18 +118,8 @@ int openTcpSocket(char *hostname, int port)
 		perror("connect()");
 		return -1;
 	}
-	else
-	{
-		// read server welcoming message
-		if (readTcp(tcpSocket) > 0)
-		{
-			return tcpSocket;
-		}
-		else
-		{
-			return -1;
-		}
-	}
+
+	return tcpSocket;
 }
 
 int writeTcp(int socket, char *msg)

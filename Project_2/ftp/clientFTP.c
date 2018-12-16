@@ -26,7 +26,10 @@ int writeFTP(int ftpSocket, char *cmd, char *arg)
 	if (r)
 		return -1;
 	else
-		return readTcp(ftpSocket) > 0 ? 0 : -1;
+	{
+		char *msg = readTcp(ftpSocket);
+		printf("%s\n", msg);
+	}
 }
 
 int auth(char *user, char *password)
@@ -61,6 +64,10 @@ int setup(char *ip, char *user, char *password)
 		perror("Error opening socket.");
 		return -1;
 	}
+
+	char *msg = readTcp(primaryFtpSocket);
+
+	printf("Welcoming message:\n%s\n", msg);
 
 	// login to ftp server
 	if (auth(user, password))

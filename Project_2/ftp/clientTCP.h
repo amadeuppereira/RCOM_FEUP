@@ -12,7 +12,7 @@ int openTcpSocket(char *hostname, int port);
 
 int writeTcp(int socket, char *msg);
 
-int readTcp(int socket);
+char *readTcp(int socket);
 
 int closeTcpSocket(int socket);
 
