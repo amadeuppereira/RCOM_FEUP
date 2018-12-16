@@ -31,43 +31,82 @@ int main(int argc, char **argv)
 	//protocol = malloc()
 
 	// parse info from url argument
+	int credentials = 0; //0 - no credentials, 1 - credentials given
+	char * at = strchr(url, '@');
+	char * two_dots = strchr(url, ':');
+	if(at != NULL && two_dots != NULL){
+		credentials = 1;
+	}else if((at != NULL && two_dots == NULL) || (at == NULL && two_dots != NULL)){
+		printf("User or/and password wrong");
+		exit(-1);
+	}
+
 	pch = strtok(url, "/:@");
+	
 	int count = 0;
 
 	while (pch != NULL)
 	{
 		int size = sizeof(char) * strlen(pch);
+		
+		if(credentials == 0){
+			// ip
+			if (count == 0){
+				ip = malloc(size);
+				strcpy(ip, pch);
+			}
 
-		// user
-		if (count == 0)
-		{
-			user = malloc(size);
-			strcpy(user, pch);
+			// file path
+			else if (count == 1){
+				urlPath = malloc(size);
+				strcpy(urlPath, pch);
+			}
+
+			else{
+				urlPath = realloc(urlPath, strlen(urlPath) + size + sizeof(char));
+				urlPath[strlen(urlPath)] = '/';
+				strcat(urlPath, pch);
+			}
 		}
+		else{
+			// user
+			if (count == 0){
+				user = malloc(size);
+				strcpy(user, pch);
+			}
 
-		// password
-		else if (count == 1)
-		{
-			password = malloc(size);
-			strcpy(password, pch);
-		}
+			// password
+			else if (count == 1){
+				password = malloc(size);
+				strcpy(password, pch);
+			}
 
-		// ip
-		else if (count == 2)
-		{
-			ip = malloc(size);
-			strcpy(ip, pch);
-		}
+			// ip
+			else if (count == 2){
+				ip = malloc(size);
+				strcpy(ip, pch);
+			}
 
-		// file path
-		else if (count == 3)
-		{
-			urlPath = malloc(size);
-			strcpy(urlPath, pch);
+			// file path
+			else if (count == 3){
+				urlPath = malloc(size);
+				strcpy(urlPath, pch);
+			}
+
+			else{
+				urlPath = realloc(urlPath, strlen(urlPath) + size + sizeof(char));
+				urlPath[strlen(urlPath)] = '/';
+				strcat(urlPath, pch);
+			}
 		}
 
 		pch = strtok(NULL, "/:@");
 		count++;
+	}
+
+	if(credentials == 0){
+		user = "anonymous";
+		password = "anonymous";
 	}
 
 	if (user == NULL)
@@ -105,8 +144,10 @@ int main(int argc, char **argv)
 	}*/
 
 	free(ip);
-	free(user);
-	free(password);
+	if(credentials == 1){
+		free(user);
+		free(password);
+	}
 	free(urlPath);
 	free(url);
 
