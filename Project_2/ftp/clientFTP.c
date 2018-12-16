@@ -107,6 +107,29 @@ int parsePasvMsg(char *msg)
 	return firstNumber * 256 + secondNumber;
 }
 
+int receiveFile(char *filePath)
+{
+	// receive file
+	FILE *f = fopen(filePath, "a");
+
+	if (f == NULL)
+	{
+		return -1;
+	}
+	do
+	{
+		char *msg = readTcp(secondaryFtpSocket);
+
+		f = fopen(filePath, "a");
+
+		// Write msg to file
+		fprintf(f, "%s", msg);
+
+	} while (1);
+
+	return 0;
+}
+
 int downloadFile(char *ip, char *user, char *password, char *filePath)
 {
 	// connect to socket
@@ -157,6 +180,8 @@ int downloadFile(char *ip, char *user, char *password, char *filePath)
 		}
 
 		printf("Secondary socket opened.\n");
+
+		receiveFile(filePath);
 	}
 	else if (pchild < 0)
 	{
@@ -164,7 +189,7 @@ int downloadFile(char *ip, char *user, char *password, char *filePath)
 	}
 
 	// parent process
-	/*sleep(3);
+	sleep(2);
 
 	// download file
 	if (downloadFtp(filePath))
@@ -172,7 +197,7 @@ int downloadFile(char *ip, char *user, char *password, char *filePath)
 		printf("Error downloading file.");
 		free(msg);
 		return -1;
-	}*/
+	}
 
 	// wait for child process to finish (download process)
 	waitpid(pchild, &status, 0);
