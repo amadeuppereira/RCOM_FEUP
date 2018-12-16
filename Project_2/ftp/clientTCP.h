@@ -1,12 +1,19 @@
 #ifndef _CLIENT_TCP_
 #define _CLIENT_TCP_
 
-int openSocket(char *hostname, int port);
+/**
+ * @brief Open tcp socket.
+ * 
+ * @param hostname host url (ex: fe.up.pt).
+ * @param port port (ex: 21).
+ * @return int socket in success, -1 in error.
+ */
+int openTcpSocket(char *hostname, int port);
 
-int writeTCP(char *msg);
+int writeTcp(int socket, char *msg);
 
-int readTCP();
+int readTcp(int socket);
 
-int closeSocket();
+int closeTcpSocket(int socket);
 
 #endif
