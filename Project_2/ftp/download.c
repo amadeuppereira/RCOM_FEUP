@@ -32,68 +32,81 @@ int main(int argc, char **argv)
 
 	// parse info from url argument
 	int credentials = 0; //0 - no credentials, 1 - credentials given
-	char * at = strchr(url, '@');
-	char * two_dots = strchr(url, ':');
-	if(at != NULL && two_dots != NULL){
+	char *at = strchr(url, '@');
+	char *two_dots = strchr(url, ':');
+	if (at != NULL && two_dots != NULL)
+	{
 		credentials = 1;
-	}else if((at != NULL && two_dots == NULL) || (at == NULL && two_dots != NULL)){
+	}
+	else if ((at != NULL && two_dots == NULL) || (at == NULL && two_dots != NULL))
+	{
 		printf("User or/and password wrong");
 		exit(-1);
 	}
 
 	pch = strtok(url, "/:@");
-	
+
 	int count = 0;
 
 	while (pch != NULL)
 	{
 		int size = sizeof(char) * strlen(pch);
-		
-		if(credentials == 0){
+
+		if (credentials == 0)
+		{
 			// ip
-			if (count == 0){
+			if (count == 0)
+			{
 				ip = malloc(size);
 				strcpy(ip, pch);
 			}
 
 			// file path
-			else if (count == 1){
+			else if (count == 1)
+			{
 				urlPath = malloc(size);
 				strcpy(urlPath, pch);
 			}
 
-			else{
+			else
+			{
 				urlPath = realloc(urlPath, strlen(urlPath) + size + sizeof(char));
 				urlPath[strlen(urlPath)] = '/';
 				strcat(urlPath, pch);
 			}
 		}
-		else{
+		else
+		{
 			// user
-			if (count == 0){
+			if (count == 0)
+			{
 				user = malloc(size);
 				strcpy(user, pch);
 			}
 
 			// password
-			else if (count == 1){
+			else if (count == 1)
+			{
 				password = malloc(size);
 				strcpy(password, pch);
 			}
 
 			// ip
-			else if (count == 2){
+			else if (count == 2)
+			{
 				ip = malloc(size);
 				strcpy(ip, pch);
 			}
 
 			// file path
-			else if (count == 3){
+			else if (count == 3)
+			{
 				urlPath = malloc(size);
 				strcpy(urlPath, pch);
 			}
 
-			else{
+			else
+			{
 				urlPath = realloc(urlPath, strlen(urlPath) + size + sizeof(char));
 				urlPath[strlen(urlPath)] = '/';
 				strcat(urlPath, pch);
@@ -104,7 +117,8 @@ int main(int argc, char **argv)
 		count++;
 	}
 
-	if(credentials == 0){
+	if (credentials == 0)
+	{
 		user = "anonymous";
 		password = "anonymous";
 	}
@@ -139,7 +153,7 @@ int main(int argc, char **argv)
 	printf("------------------------------------\n");
 
 	// setup FTP connection.
-	setup(ip, user, password);
+	downloadFile(ip, user, password, urlPath);
 
 	// TODO: download file
 	/*if (downloadFile(urlPath))
@@ -149,7 +163,8 @@ int main(int argc, char **argv)
 	}*/
 
 	free(ip);
-	if(credentials == 1){
+	if (credentials == 1)
+	{
 		free(user);
 		free(password);
 	}

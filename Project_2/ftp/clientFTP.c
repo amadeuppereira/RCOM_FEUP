@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define PORT 21
 #define USER "USER"
@@ -47,41 +48,66 @@ int auth(char *user, char *password)
 	return 0;
 }
 
-int downloadFile(char *filePath)
+int downloadFtp(char *filePath)
 {
 	// write download file command
-	return writeFTP(primaryFtpSocket, "RETR", filePath == NULL ? "" : filePath);
+	if (writeFTP(primaryFtpSocket, "RETR", filePath == NULL ? "" : filePath))
+	{
+		printf("Error writing to server.");
+		return -1;
+	}
+
+	char *msg = readTcp(primaryFtpSocket);
+	char *token = "";
+
+	token = strtok(msg, " ");
+
+	int code = strtol(token, NULL, 10);
+
+	switch (code)
+	{
+	case 550:
+		token = strtok(NULL, "");
+		printf("%s\n", token);
+		free(msg);
+		return -1;
+	default:
+		break;
+	}
+
+	printf("%d\n", code);
+
+	free(msg);
+
+	return 0;
 }
 
 int parsePasvMsg(char *msg)
 {
 	char *token = "";
 	int port = 0;
+	int firstNumber, secondNumber;
 
 	token = strtok(msg, "(,)");
 
-	token = strtok(NULL, "(,)");
+	for (int i = 0; i < 7; i++)
+	{
+		token = strtok(NULL, "(,)");
 
-	token = strtok(NULL, "(,)");
+		if (i == 4)
+		{
+			firstNumber = strtol(token, NULL, 10);
+		}
 
-	token = strtok(NULL, "(,)");
-
-	token = strtok(NULL, "(,)");
-
-	token = strtok(NULL, "(,)");
-
-	token = strtok(NULL, "(,)");
-
-	int firstNumber = strtol(token, NULL, 10);
-
-	token = strtok(NULL, "(,)");
-
-	int secondNumber = strtol(token, NULL, 10);
-
+		else if (i == 5)
+		{
+			secondNumber = strtol(token, NULL, 10);
+		}
+	}
 	return firstNumber * 256 + secondNumber;
 }
 
-int setup(char *ip, char *user, char *password)
+int downloadFile(char *ip, char *user, char *password, char *filePath)
 {
 	// connect to socket
 	primaryFtpSocket = openTcpSocket(ip, PORT);
@@ -112,17 +138,44 @@ int setup(char *ip, char *user, char *password)
 	msg = readTcp(primaryFtpSocket);
 	printf("%s\n", msg);
 
-	// TODO: connect to secondary socket
+	// Connect to secondary socket
 	int secondaryPort = parsePasvMsg(msg);
-	secondaryFtpSocket = openTcpSocket(ip, secondaryPort);
 
-	if (secondaryFtpSocket < 0)
+	int pchild, status;
+
+	pchild = fork();
+
+	if (pchild == 0)
 	{
-		perror("Error opening secondary socket.");
-		return -1;
+		// child process
+		secondaryFtpSocket = openTcpSocket(ip, secondaryPort);
+
+		if (secondaryFtpSocket < 0)
+		{
+			perror("Error opening secondary socket.");
+			return -1;
+		}
+
+		printf("Secondary socket opened.\n");
+	}
+	else if (pchild < 0)
+	{
+		status = -1;
 	}
 
-	printf("%d\n", secondaryPort);
+	// parent process
+	/*sleep(3);
+
+	// download file
+	if (downloadFtp(filePath))
+	{
+		printf("Error downloading file.");
+		free(msg);
+		return -1;
+	}*/
+
+	// wait for child process to finish (download process)
+	waitpid(pchild, &status, 0);
 
 	free(msg);
 	return 0;
