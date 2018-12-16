@@ -112,8 +112,15 @@ int parsePasvMsg(char *msg)
 char *getFileName(char *filePath)
 {
 	char *token = strtok(filePath, "/");
+	char *previousToken = token;
+	
+	/* walk through other tokens */
+	while( token != NULL ) {
+		previousToken = token;
+		token = strtok(NULL, "/");
+	}
 
-	return token;
+	return previousToken;
 }
 
 int receiveFile(char *filePath)
