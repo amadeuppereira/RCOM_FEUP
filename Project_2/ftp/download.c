@@ -48,7 +48,7 @@ int main(int argc, char **argv)
 
 	int count = 0;
 
-	while (pch != NULL)
+	while (count != 4)
 	{
 		int size = sizeof(char) * strlen(pch);
 
@@ -59,20 +59,15 @@ int main(int argc, char **argv)
 			{
 				ip = malloc(size);
 				strcpy(ip, pch);
+				pch = strtok(NULL, "");
 			}
 
 			// file path
-			else if (count == 1)
+			else
 			{
 				urlPath = malloc(size);
 				strcpy(urlPath, pch);
-			}
-
-			else
-			{
-				urlPath = realloc(urlPath, strlen(urlPath) + size + sizeof(char));
-				urlPath[strlen(urlPath)] = '/';
-				strcat(urlPath, pch);
+				count = 3;
 			}
 		}
 		else
@@ -82,6 +77,7 @@ int main(int argc, char **argv)
 			{
 				user = malloc(size);
 				strcpy(user, pch);
+				pch = strtok(NULL, "/:@");
 			}
 
 			// password
@@ -89,6 +85,7 @@ int main(int argc, char **argv)
 			{
 				password = malloc(size);
 				strcpy(password, pch);
+				pch = strtok(NULL, "/:@");
 			}
 
 			// ip
@@ -96,6 +93,7 @@ int main(int argc, char **argv)
 			{
 				ip = malloc(size);
 				strcpy(ip, pch);
+				pch = strtok(NULL, "");
 			}
 
 			// file path
@@ -104,16 +102,8 @@ int main(int argc, char **argv)
 				urlPath = malloc(size);
 				strcpy(urlPath, pch);
 			}
-
-			else
-			{
-				urlPath = realloc(urlPath, strlen(urlPath) + size + sizeof(char));
-				urlPath[strlen(urlPath)] = '/';
-				strcat(urlPath, pch);
-			}
 		}
 
-		pch = strtok(NULL, "/:@");
 		count++;
 	}
 
@@ -152,15 +142,8 @@ int main(int argc, char **argv)
 	printf("File path: %s.\n", urlPath);
 	printf("------------------------------------\n");
 
-	// setup FTP connection.
+	// Download File
 	downloadFile(ip, user, password, urlPath);
-
-	// TODO: download file
-	/*if (downloadFile(urlPath))
-	{
-		perror("Download file error: ");
-		return -1;
-	}*/
 
 	free(ip);
 	if (credentials == 1)

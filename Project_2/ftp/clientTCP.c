@@ -1,5 +1,4 @@
 /*      (C)2000 FEUP  */
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -10,6 +9,9 @@
 #include <netdb.h>
 #include <strings.h>
 #include <string.h>
+#include <stdio.h>
+#include <errno.h>
+#include "clientTCP.h"
 
 char *getIP(char *hostname)
 {
@@ -17,16 +19,15 @@ char *getIP(char *hostname)
 
 	if ((h = gethostbyname(hostname)) == NULL)
 	{
-		herror("gethostbyname");
+		perror("gethostbyname");
 		return NULL;
 	}
 
-	printf("Host name  : %s\n", h->h_name);
+	printf("\nHost name  : %s\n", h->h_name);
 	printf("IP Address : %s\n", inet_ntoa(*((struct in_addr *)h->h_addr)));
 
 	return inet_ntoa(*((struct in_addr *)h->h_addr));
 }
-
 char *readTcp(int socket)
 {
 	char *msg = malloc(sizeof(char));
@@ -109,7 +110,7 @@ int openTcpSocket(char *hostname, int port)
 	}
 	else
 	{
-		printf("TCP socket opened to %s:%d!\n", ip, port);
+		printf("TCP socket opened to %s:%d!\n\n", ip, port);
 	}
 
 	/*connect to the server*/

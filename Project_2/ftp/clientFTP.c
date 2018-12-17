@@ -5,6 +5,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
+#include <signal.h>
 
 #define PORT 21
 #define USER "USER"
@@ -17,10 +19,9 @@ int writeFTP(int ftpSocket, char *cmd, char *arg)
 {
 	char buffer[256] = "";
 
-	strlcat(buffer, cmd, sizeof(buffer));
-	strlcat(buffer, " ", sizeof(buffer));
-	strlcat(buffer, arg, sizeof(buffer));
-
+	strcat(buffer, cmd);
+	strcat(buffer, " ");
+	strcat(buffer, arg);
 	// write msg to tcp socket
 	return writeTcp(ftpSocket, buffer) > 0 ? 0 : -1;
 }
@@ -30,27 +31,39 @@ int auth(char *user, char *password)
 	// send user
 	if (writeFTP(primaryFtpSocket, USER, user) < 0)
 	{
+		printf("Error on sending USER.");
 		return -1;
 	}
 
 	char *msg = readTcp(primaryFtpSocket);
 	printf("%s\n", msg);
 
+	if(strncmp(msg, "331 Please specify the password.", 32) != 0){
+		printf("Error on authentication: wrong USER");
+		return -1;
+	}
+
 	// send password
 	if (writeFTP(primaryFtpSocket, PASS, password) < 0)
 	{
+		printf("Error on sending PASS.");
 		return -1;
 	}
 
 	msg = readTcp(primaryFtpSocket);
 	printf("%s\n", msg);
 
+	if(strncmp(msg, "230 Login successful.", 21) != 0){
+		printf("Error on authentication: wrong PASS");
+		return -1;
+	}
+
 	free(msg);
 	return 0;
 }
 
-int downloadFtp(char *filePath)
-{
+int downloadFTP(char *filePath)
+{	
 	// write download file command
 	if (writeFTP(primaryFtpSocket, "RETR", filePath == NULL ? "" : filePath))
 	{
@@ -86,12 +99,11 @@ int downloadFtp(char *filePath)
 int parsePasvMsg(char *msg)
 {
 	char *token = "";
-	int port = 0;
 	int firstNumber, secondNumber;
 
 	token = strtok(msg, "(,)");
-
-	for (int i = 0; i < 7; i++)
+	int i=  0;
+	for (; i < 7; i++)
 	{
 		token = strtok(NULL, "(,)");
 
@@ -108,7 +120,6 @@ int parsePasvMsg(char *msg)
 	return firstNumber * 256 + secondNumber;
 }
 
-// TODO: retornar nome do ficheiro
 char *getFileName(char *filePath)
 {
 	char *token = strtok(filePath, "/");
@@ -126,19 +137,40 @@ char *getFileName(char *filePath)
 int receiveFile(char *filePath)
 {
 	// receive file
-	FILE *f = fopen(getFileName(filePath), "w");
+	char * fileName = getFileName(filePath);
+	FILE *f = fopen(fileName, "w");
 
 	if (f == NULL)
 	{
 		return -1;
 	}
 
-	char buffer[1024];
+	char buffer[1];
+	int bytes;
+	int counter = 0;
 
-	int bytes = recv(secondaryFtpSocket, &buffer, sizeof(buffer), 0);
+	while((bytes = read(secondaryFtpSocket, &buffer, sizeof(buffer))) > 0){
 
-	// Write strting received to file
-	fprintf(f, "%s", buffer);
+		//Write to file
+		fwrite(buffer, sizeof(char), sizeof(buffer), f);
+
+		counter += bytes;
+
+		if(bytes == -1){
+			printf("Error reading socket.");
+			return -1;
+		}
+	}
+
+	if(counter == 0){
+		printf("Nothing written in file.");
+		return -1;
+	}
+	else{
+		printf("File downloaded with success.\n");
+		printf("File: %s\n", fileName);
+		printf("Size: %d bytes\n", counter);
+	}
 
 	fclose(f);
 
@@ -147,29 +179,27 @@ int receiveFile(char *filePath)
 
 int downloadFile(char *ip, char *user, char *password, char *filePath)
 {
-	// connect to socket
+	// connect to primary socket
 	primaryFtpSocket = openTcpSocket(ip, PORT);
 	if (primaryFtpSocket < 0)
 	{
-		perror("Error opening socket.");
+		printf("Error opening socket.");
 		return -1;
 	}
 
 	char *msg = readTcp(primaryFtpSocket);
-
-	printf("Welcoming message:\n%s\n", msg);
+	printf("%s\n", msg);
 
 	// login to ftp server
 	if (auth(user, password))
 	{
-		perror("Auth error: ");
 		return -1;
 	}
 
 	// set passive mode
 	if (writeFTP(primaryFtpSocket, "PASV", ""))
 	{
-		perror("Error entering passive mode.");
+		printf("Error entering passive mode.");
 		return -1;
 	}
 
@@ -185,42 +215,45 @@ int downloadFile(char *ip, char *user, char *password, char *filePath)
 
 	if (pchild == 0)
 	{
-		// child process
+		// Child process
 		secondaryFtpSocket = openTcpSocket(ip, secondaryPort);
 
 		if (secondaryFtpSocket < 0)
 		{
-			perror("Error opening secondary socket.");
+			printf("Error opening secondary socket.");
 			return -1;
 		}
 
 		if (receiveFile(filePath))
 		{
 			printf("Error receiving file.\n");
+			return -1;
 		}
 
 		printf("Finished child process.\n");
 	}
-	else if (pchild < 0)
+	else if (pchild > 0){
+		// Parent process
+
+		// download file
+		if (downloadFTP(filePath))
+		{
+			printf("Error downloading file.");
+			kill(pchild, SIGKILL);
+			free(msg);
+			return -1;
+		}
+
+		// wait for child process to finish (download process)
+		waitpid(pchild, &status, 0);
+	}
+	else
 	{
+		// Error
 		status = -1;
 		free(msg);
 		return -1;
 	}
-
-	// parent process
-	sleep(2);
-
-	// download file
-	if (downloadFtp(filePath))
-	{
-		printf("Error downloading file.");
-		free(msg);
-		return -1;
-	}
-
-	// wait for child process to finish (download process)
-	waitpid(pchild, &status, 0);
 
 	free(msg);
 	return 0;
