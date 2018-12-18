@@ -41,6 +41,11 @@ char *readTcp(int socket)
 	do
 	{
 		bytes = recv(socket, &buffer, sizeof(buffer), 0);
+
+		if(bytes == -1){
+			printf("Error on reading TCP\n");
+			return NULL;
+		}
 		line[count++] = buffer;
 
 		// copy buffer to final message

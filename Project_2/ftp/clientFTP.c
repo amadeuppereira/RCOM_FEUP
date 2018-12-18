@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <sys/types.h>
 
 #define PORT 21
 #define USER "USER"
