@@ -1,3 +1,4 @@
+#define _POSIX_SOURCE
 #include "clientTCP.h"
 #include "clientFTP.h"
 #include <stdio.h>
@@ -40,7 +41,7 @@ int auth(char *user, char *password)
 	printf("%s\n", msg);
 
 	if(strncmp(msg, "331 Please specify the password.", 32) != 0){
-		printf("Error on authentication: wrong USER");
+		printf("Error on authentication: wrong USER\n");
 		return -1;
 	}
 
@@ -55,7 +56,7 @@ int auth(char *user, char *password)
 	printf("%s\n", msg);
 
 	if(strncmp(msg, "230 Login successful.", 21) != 0){
-		printf("Error on authentication: wrong PASS");
+		printf("Error on authentication: wrong PASS\n");
 		return -1;
 	}
 
@@ -68,7 +69,7 @@ int downloadFTP(char *filePath)
 	// write download file command
 	if (writeFTP(primaryFtpSocket, "RETR", filePath == NULL ? "" : filePath))
 	{
-		printf("Error writing to server.");
+		printf("Error writing to server.\n");
 		return -1;
 	}
 
@@ -158,13 +159,13 @@ int receiveFile(char *filePath)
 		counter += bytes;
 
 		if(bytes == -1){
-			printf("Error reading socket.");
+			printf("Error reading socket.\n");
 			return -1;
 		}
 	}
 
 	if(counter == 0){
-		printf("Nothing written in file.");
+		printf("Nothing written in file.\n");
 		return -1;
 	}
 	else{
@@ -184,7 +185,7 @@ int downloadFile(char *ip, char *user, char *password, char *filePath)
 	primaryFtpSocket = openTcpSocket(ip, PORT);
 	if (primaryFtpSocket < 0)
 	{
-		printf("Error opening socket.");
+		printf("Error opening socket.\n");
 		return -1;
 	}
 
@@ -200,7 +201,7 @@ int downloadFile(char *ip, char *user, char *password, char *filePath)
 	// set passive mode
 	if (writeFTP(primaryFtpSocket, "PASV", ""))
 	{
-		printf("Error entering passive mode.");
+		printf("Error entering passive mode.\n");
 		return -1;
 	}
 
@@ -221,7 +222,7 @@ int downloadFile(char *ip, char *user, char *password, char *filePath)
 
 		if (secondaryFtpSocket < 0)
 		{
-			printf("Error opening secondary socket.");
+			printf("Error opening secondary socket.\n");
 			return -1;
 		}
 
@@ -239,7 +240,7 @@ int downloadFile(char *ip, char *user, char *password, char *filePath)
 		// download file
 		if (downloadFTP(filePath))
 		{
-			printf("Error downloading file.");
+			printf("Error downloading file.\n");
 			kill(pchild, SIGKILL);
 			free(msg);
 			return -1;

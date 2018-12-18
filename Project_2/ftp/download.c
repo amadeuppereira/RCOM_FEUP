@@ -40,7 +40,7 @@ int main(int argc, char **argv)
 	}
 	else if ((at != NULL && two_dots == NULL) || (at == NULL && two_dots != NULL))
 	{
-		printf("User or/and password wrong");
+		printf("User or/and password wrong\n");
 		exit(-1);
 	}
 
@@ -115,24 +115,24 @@ int main(int argc, char **argv)
 
 	if (user == NULL)
 	{
-		printf("User can't be null.");
+		printf("User can't be null.\n");
 		exit(-1);
 	}
 
 	if (ip == NULL)
 	{
-		printf("Ip can't be null.");
+		printf("Ip can't be null.\n");
 		exit(-1);
 	}
 
 	if (password == NULL)
 	{
-		printf("Password can't be null.");
+		printf("Password can't be null.\n");
 		exit(-1);
 	}
 
 	if(urlPath == NULL){
-		printf("URL Path can't be null.");
+		printf("URL Path can't be null.\n");
 		exit(-1);
 	}
 
